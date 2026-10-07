@@ -1,143 +1,82 @@
 import streamlit as st
-import streamlit.components.v1 as components  # Возвращаем для стабильного рендеринга
-import numpy as np
-import time
-
-# Импортируем наши модули физики и графики
 import physics
-import render
+import stages
 
-# Настройка страницы Streamlit
+# Налаштування сторінки Streamlit
 st.set_page_config(page_title="Лабораторна робота: В'язкість повітря", layout="wide")
 
-# Исправленный чистый заголовок без битых символов
 st.title("🔬 Віртуальна лабораторна робота")
 st.subheader("Визначення коефіцієнта в'язкості, середньої довжини вільного пробігу та ефективного діаметра молекул повітря")
 
-# Исправленный вызов колонок (пропорции 1 к 2)
+# Ініціалізація станів сесії
+if "step" not in st.session_state:
+    st.session_state.step = 0
+if "current_dH" not in st.session_state:
+    st.session_state.current_dH = 0.0
+if "measured_time" not in st.session_state:
+    st.session_state.measured_time = 0.0
+if "history" not in st.session_state:
+    st.session_state.history = []
+
 col_sidebar, col_main = st.columns([1, 2])
 
 with col_sidebar:
     st.header("⚙️ Параметри середовища")
-    t_celsius = st.slider("Кімнатна температура t, °C", min_value=15.0, max_value=30.0, value=21.0, step=0.5)
-    p_kpa = st.slider("Атмосферний тиск Pa, кПа", min_value=95.0, max_value=105.0, value=100.5, step=0.05)
+    disabled_inputs = st.session_state.step != 0
+    t_celsius = st.slider("Кімнатна температура t, °C", min_value=15.0, max_value=30.0, value=21.0, step=0.5, disabled=disabled_inputs)
+    p_kpa = st.slider("Атмосферний тиск Pa, кПа", min_value=95.0, max_value=105.0, value=100.5, step=0.05, disabled=disabled_inputs)
 
     st.header("🚰 Управління установкою")
-    valve_pos = st.slider("Ступінь відкриття крана B, %", min_value=0, max_value=100, value=50, step=5)
+    valve_pos = st.slider("Ступінь відкриття крана B, %", min_value=0, max_value=100, value=50, step=5, disabled=disabled_inputs)
     
     st.markdown("---")
     st.markdown(f"""
     **Довідкові дані установки:**
-    * Довжина капіляра L = physics.L м
-    * Радіус капіляра \(R = {physics.R_cap}\) м
-    * Рідина в манометрі: Вода (ρ = 1000 кг/м³)
+    * Довжина капіляра $L = {physics.L}$ м
+    * Радіус капіляра $R = {physics.R_cap}$ м
+    * Рідина в манометрі: Вода ($\rho = 1000$ кг/м³)
     """)
 
-# --- ФІЗИЧНИЙ РОЗРАХУНОК ---
-delta_H_nominal, flow_rate_air, Re, is_turbulent = physics.calculate_flow_and_reynolds(
-    valve_pos, t_celsius, p_kpa
-)
-dH_mm_nominal = delta_H_nominal * 1000.0
-
-if "experiment_running" not in st.session_state:
-    st.session_state.experiment_running = False
-if "history" not in st.session_state:
-    st.session_state.history = []
+# Фізичні розрахунки
+delta_H_nominal, flow_rate_air, Re, is_turbulent = physics.calculate_flow_and_reynolds(valve_pos, t_celsius, p_kpa)
+target_dH_mm = delta_H_nominal * 1000.0
 
 with col_main:
     st.header("📊 Вимірювальна установка та анімація")
     
-    col_btn1, col_btn2, col_btn3 = st.columns(3)
-    with col_btn1:
-        start_disabled = st.session_state.experiment_running or valve_pos == 0
-        if st.button("▶️ Відкрити кран / Старт", use_container_width=True, disabled=start_disabled):
-            st.session_state.experiment_running = True
+    # Кнопки керування кроками вимірювання
+    col_b1, col_b2, col_b3 = st.columns(3)
+    with col_b1:
+        if st.button("▶️ 1. Відкрити кран B", use_container_width=True, disabled=st.session_state.step != 0 or valve_pos == 0):
+            st.session_state.step = 1
             st.rerun()
             
-    with col_btn2:
-        if st.button("⏹️ Закрити кран / Стоп", use_container_width=True, disabled=not st.session_state.experiment_running):
-            st.session_state.experiment_running = False
-            
-            res = physics.generate_experiment_result(
-                flow_rate_air, delta_H_nominal, is_turbulent, t_celsius, p_kpa
-            )
-            res = {**{"№ Досліду": len(st.session_state.history) + 1}, **res}
-            st.session_state.history.append(res)
+    with col_b2:
+        if st.button("📥 2. Підставити робочий стакан", use_container_width=True, disabled=st.session_state.step != 2):
+            st.session_state.step = 3
+            st.session_state.measured_time = 0.0
             st.rerun()
             
-    with col_btn3:
-        if st.button("🗑️ Очистити таблицю", use_container_width=True):
-            st.session_state.history = []
+    with col_b3:
+        time_lock = st.session_state.measured_time < 60.0 if st.session_state.step == 3 else True
+        if st.button("📤 3. Прибрати робочий стакан", use_container_width=True, disabled=time_lock):
+            st.session_state.step = 4
             st.rerun()
 
-    # Слот контейнера для графики
-    installation_placeholder = st.empty()
-    status_placeholder = st.empty()
-    
-    # --- ЕКРАН ПРОЦЕСУ ВИМІРЮВАННЯ (АНІМАЦІЯ) ---
-    if st.session_state.experiment_running:
-        sim_time = 0.0
-        v_collected_cm3 = 0.0
-        m0 = 62.44
-        
-        for step in range(60):
-            if not st.session_state.experiment_running:
-                break
-                
-            sim_time += 0.25
-            v_collected_cm3 += (flow_rate_air * 0.25) * 1e6 
-            current_mass = m0 + v_collected_cm3
-            
-            html_code = render.get_html_installation(
-                valve_pos=valve_pos,
-                dH_mm=dH_mm_nominal,
-                is_running=True,
-                sim_time=sim_time,
-                is_turbulent=is_turbulent
-            )
-            
-            # Стабильный вывод iframe с жестко заданной высотой
-            with installation_placeholder:
-                components.html(html_code, height=450, scrolling=False)
-            
-            water_drops = "💧 " * (int(sim_time * 2) % 4 + 1)
-            status_placeholder.markdown(f"""
-            ### ⏳ Триває вимірювання...
-            * **Поточний час (секундомір):** `{round(sim_time, 1)} с`
-            * **Маса стакана з водою (поточна вага):** `{round(current_mass, 1)} г`
-            * **Статус крана:** Вода витікає краплинами... {water_drops}
-            """)
-            
-            if is_turbulent:
-                st.warning("⚠️ УВАГА! Потік повітря став турбулентним (Число Re > 1500). Закон Пуазейля БІЛЬШЕ НЕ ВИКОНУЄТЬСЯ! Манометр нестабільний (тремтить). Терміново прикрийте кран B.")
-            
-            time.sleep(0.05)
-            
-    else:
-        # Статический съём установки при остановке
-        html_code = render.get_html_installation(
-            valve_pos=valve_pos,
-            dH_mm=0.0,
-            is_running=False,
-            sim_time=0.0,
-            is_turbulent=is_turbulent
-        )
-        with installation_placeholder:
-            components.html(html_code, height=450, scrolling=False)
-            
-        status_placeholder.info("Установка готова до роботи. Налаштуйте ступінь відкриття крана та натисніть 'Старт'.")
-        
-        if is_turbulent and valve_pos > 0:
-            st.warning("⚠️ УВАГА! При такому ступені відкриття крана потік буде турбулентним. Закон Пуазейля не виконується! Перед запуском прикрийте кран B.")
+    # Делегуємо всю обробку кроків та рендерингу окремому модулю stages
+    stages.handle_laboratory_stages(valve_pos, target_dH_mm, flow_rate_air, is_turbulent, t_celsius, p_kpa)
 
     # --- ТАБЛИЦЯ РЕЗУЛЬТАТІВ ---
     st.header("📋 Протокол вимірювань (Дані для обробки студентом)")
     if st.session_state.history:
         st.dataframe(st.session_state.history, use_container_width=True)
+        if st.button("🗑️ Очистити таблицю дослідів", disabled=st.session_state.step != 0):
+            st.session_state.history = []
+            st.rerun()
     else:
-        st.write("Таблиця порожня. Проведіть вимірювання, щоб отримати експериментальні дані.")
+        st.write("Таблиця порожня. Проведіть повний цикл вимірювань за кроками 1-4.")
 
-    # --- МЕТОДИЧНІ ВКАЗІВКИ ---
+    # --- МЕТОДИЧНИЙ ПРОВІДНИК ---
     with st.expander("📚 Розрахункові формули та хід роботи"):
         st.markdown(r"""
         ### Порядок виконання розрахунків:
