@@ -29,10 +29,11 @@ with col_sidebar:
     st.markdown("---")
     st.markdown(f"""
     **Довідкові дані установки:**
-    * Довжина капіляра L = physics.L м
-    * Радіус капіляра \(R = {physics.R_cap}\) м
-    * Рідина в манометрі: Вода (ρ = 1000 кг/м³)
+    * Довжина капіляра $L = {physics.L}$ м
+    * Радіус капіляра $R = {physics.R_cap}$ м
+    * Рідина в манометрі: Вода ($\rho = 1000$ кг/м³)
     """)
+
 
 # --- ФІЗИЧНИЙ РОЗРАХУНОК ---
 delta_H_nominal, flow_rate_air, Re, is_turbulent = physics.calculate_flow_and_reynolds(
