@@ -6,7 +6,7 @@ L = 2.14          # Довжина капіляра в метрах (214 см)
 R_cap = 0.00035   # Радіус капіляра в метрах (0.035 см)
 R_gas = 8.314     # Універсальна газова константа (Дж/(моль*К))
 M_air = 0.029     # Молярна маса повітря (кг/моль)
-rho_w = 1000.0    # Плотність води в манометрі та судині (кг/м3)
+rho_w = 1000.0    # Густина води в манометрі та судині (кг/м3)
 g = 9.81          # Прискорення вільного падіння (м/с2)
 k_B = 1.38e-23    # Постійна Больцмана (Дж/К)
 
@@ -23,8 +23,7 @@ def calculate_flow_and_reynolds(valve_pos, t_celsius, p_kpa):
     T_kelvin = t_celsius + 273.15
     P_pascal = p_kpa * 1000.0
     
-    # Залежність перепаду тиску (і висоти манометра) від відкриття крана
-    # При 50% висота буде біля 84 мм (0.084 м)
+    # Залежність перепаду тиску від відкриття крана (біля 50% висота біля 84 мм)
     delta_H_nominal = (valve_pos / 50.0) * 0.084 
     delta_P = rho_w * g * delta_H_nominal
     
@@ -41,18 +40,18 @@ def calculate_flow_and_reynolds(valve_pos, t_celsius, p_kpa):
     
     return delta_H_nominal, flow_rate_air, Re, is_turbulent
 
-def generate_experiment_result(flow_rate_air, delta_H_nominal, is_turbulent, t_celsius, p_kpa):
+def generate_experiment_result(flow_rate_air, delta_H_nominal, is_turbulent, t_celsius, p_kpa, measured_time):
     """
-    Генерація фінального результату вимірювання з випадковим шумом для таблиці.
+    Генерація фінального результату вимірювання на основі реального зафіксованого часу.
     """
-    # Студенти вимірюють фіксований об'єм ~200 см3 (або масу ~200 г води)
-    base_volume_cm3 = random.uniform(180.0, 220.0) 
-    measured_time = (base_volume_cm3 / 1e6) / flow_rate_air if flow_rate_air > 0 else 0.0
+    # Розраховуємо теоретичний об'єм повітря, що пройшов за цей час (в см3)
+    theoretical_volume = (flow_rate_air * measured_time) * 1e6
     
-    # Накладання випадкового шуму на час та масу (імітація людського фактора із секундоміром)
-    measured_time = round(measured_time + random.uniform(-0.5, 0.5), 1)
+    # Додаємо невеликий випадковий шум до маси води
+    water_mass = theoretical_volume * random.uniform(0.985, 1.015)
+    water_mass = round(water_mass, 2)
+    
     m0 = 62.44  # Маса порожнього стакана з методички
-    water_mass = round(base_volume_cm3, 2)
     m_total = round(m0 + water_mass, 2)
     
     # Запис поточної висоти манометра (з шумом при турбулентності)
@@ -62,9 +61,8 @@ def generate_experiment_result(flow_rate_air, delta_H_nominal, is_turbulent, t_c
         "t, °C": t_celsius,
         "Pa, кПа": p_kpa,
         "ΔH, мм": final_dH,
-        "%\u03c4, с": measured_time,  # Символ тау для відображення часу
+        "τ, с": round(measured_time, 1),
         "m0 (порожній), г": m0,
         "m (з водою), г": m_total,
         "m_води, г": water_mass
     }
-
