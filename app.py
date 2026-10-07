@@ -2,48 +2,40 @@ import streamlit as st
 import numpy as np
 import time
 
-# Импортируем наши модули физики и графики
+# Імпортуємо наші модулі фізики та графіки
 import physics
 import render
 
-# Настройка страницы Streamlit
+# Настройка сторінки Streamlit
 st.set_page_config(page_title="Лабораторна робота: В'язкість повітря", layout="wide")
 
-# Заголовок та опис роботи
-st.title("🔬 Віртуальна лабораторна робота")
+st.title("🔬 Віртуальна開放 лабораторна робота")
 st.subheader("Визначення коефіцієнта в'язкості, середньої довжини вільного пробігу та ефективного діаметра молекул повітря")
 
-# Робочий простір: дві колонки (Параметри та Експеримент)
-col_sidebar, col_main = st.columns([1, 2])
+col_sidebar, col_main = st.columns()
 
 with col_sidebar:
     st.header("⚙️ Параметри середовища")
-    # Слайдери кімнатної температури та тиску
     t_celsius = st.slider("Кімнатна температура t, °C", min_value=15.0, max_value=30.0, value=21.0, step=0.5)
     p_kpa = st.slider("Атмосферний тиск Pa, кПа", min_value=95.0, max_value=105.0, value=100.5, step=0.05)
 
     st.header("🚰 Управління установкою")
-    # Регулятор відкриття крана
     valve_pos = st.slider("Ступінь відкриття крана B, %", min_value=0, max_value=100, value=50, step=5)
     
     st.markdown("---")
     st.markdown(f"""
     **Довідкові дані установки:**
-    * Довжина капіляра $L = {physics.L}$ м
-    * Радіус капіляра $R = {physics.R_cap}$ м
-    * Рідина в манометрі: Вода ($\rho = 1000$ кг/м³)
+    * Довжина капіляра \(L = {physics.L}\) м
+    * Радіус капіляра \(R = {physics.R_cap}\) м
+    * Рідина в манометрі: Вода (\(\rho = 1000\) кг/м³)
     """)
-
 
 # --- ФІЗИЧНИЙ РОЗРАХУНОК ---
 delta_H_nominal, flow_rate_air, Re, is_turbulent = physics.calculate_flow_and_reynolds(
     valve_pos, t_celsius, p_kpa
 )
-
-# Переводимо номінальну висоту манометра в міліметри для рендерингу
 dH_mm_nominal = delta_H_nominal * 1000.0
 
-# Ініціалізація сесії для збереження стану вимірювань
 if "experiment_running" not in st.session_state:
     st.session_state.experiment_running = False
 if "history" not in st.session_state:
@@ -52,7 +44,6 @@ if "history" not in st.session_state:
 with col_main:
     st.header("📊 Вимірювальна установка та анімація")
     
-    # Кнопки керування експериментом
     col_btn1, col_btn2, col_btn3 = st.columns(3)
     with col_btn1:
         start_disabled = st.session_state.experiment_running or valve_pos == 0
@@ -64,12 +55,9 @@ with col_main:
         if st.button("⏹️ Закрити кран / Стоп", use_container_width=True, disabled=not st.session_state.experiment_running):
             st.session_state.experiment_running = False
             
-            # Генерація експериментального результату через модуль physics
             res = physics.generate_experiment_result(
                 flow_rate_air, delta_H_nominal, is_turbulent, t_celsius, p_kpa
             )
-            
-            # Додаємо номер досліду
             res = {**{"№ Досліду": len(st.session_state.history) + 1}, **res}
             st.session_state.history.append(res)
             st.rerun()
@@ -79,7 +67,7 @@ with col_main:
             st.session_state.history = []
             st.rerun()
 
-    # Слот для відображення красивої SVG-схеми установки
+    # Слот контейнера
     installation_placeholder = st.empty()
     status_placeholder = st.empty()
     
@@ -89,17 +77,14 @@ with col_main:
         v_collected_cm3 = 0.0
         m0 = 62.44
         
-        # Цикл імітації реального часу (40 кроків)
-        for _ in range(40):
+        for step in range(60):
             if not st.session_state.experiment_running:
                 break
                 
-            sim_time += 0.5
-            # Накопичення об'єму витеклої води в см3
-            v_collected_cm3 += (flow_rate_air * 0.5) * 1e6 
+            sim_time += 0.25
+            v_collected_cm3 += (flow_rate_air * 0.25) * 1e6 
             current_mass = m0 + v_collected_cm3
             
-            # Рендеримо динамічний SVG з поточним часом та станом
             svg_code = render.get_svg_installation(
                 valve_pos=valve_pos,
                 dH_mm=dH_mm_nominal,
@@ -108,11 +93,10 @@ with col_main:
                 is_turbulent=is_turbulent
             )
             
-            # Вивід інсталяції на екран як HTML
+            # Пряме нативне оновлення через .html() без використання iframe
             installation_placeholder.html(svg_code)
             
-            # Текстовий статус вимірювання bawah
-            water_drops = "💧 " * (int(sim_time) % 4 + 1)
+            water_drops = "💧 " * (int(sim_time * 2) % 4 + 1)
             status_placeholder.markdown(f"""
             ### ⏳ Триває вимірювання...
             * **Поточний час (секундомір):** `{round(sim_time, 1)} с`
@@ -123,17 +107,18 @@ with col_main:
             if is_turbulent:
                 st.warning("⚠️ УВАГА! Потік повітря став турбулентним (Число Re > 1500). Закон Пуазейля БІЛЬШЕ НЕ ВИКОНУЄТЬСЯ! Манометр нестабільний (тремтить). Терміново прикрийте кран B.")
             
-            time.sleep(0.1) # Швидкість кадрів
+            time.sleep(0.05)
             
     else:
-        # Статичний стан установки (коли дослід не запущено)
+        # Статичний стан установки
         svg_code = render.get_svg_installation(
             valve_pos=valve_pos,
-            dH_mm=0.0, # При закритому крані тиск вирівняний
+            dH_mm=0.0,
             is_running=False,
             sim_time=0.0,
             is_turbulent=is_turbulent
         )
+        # Виводимо графіку нативно
         installation_placeholder.html(svg_code)
         status_placeholder.info("Установка готова до роботи. Налаштуйте ступінь відкриття крана та натисніть 'Старт'.")
         
@@ -154,7 +139,7 @@ with col_main:
         
         1. **Визначення маси витеклої води:**
            \[m_{\text{води}} = m - m_0\]
-           Оскільки густина води \(\rho_ж = 1.0 \text{ г/см}^3\), отримане значення маси в грамах чисельно дорівнює об'єму витеклої води (а отже, і об'єму повітря V, що пройшло крізь капіляр) у кубічних сантиметрах (см³). **Переведіть об'єм V у метри кубічні (m³) для подальших розрахунків!**
+           Оскільки густина води \(\rho_ж = 1.0 \text{ г/см}^3\), отримане значение маси в грамах чисельно дорівнює об'єму витеклої води (а отже, і об'єму повітря V, що пройшло крізь капіляр) у кубічних сантиметрах (см³). **Переведіть об'єм V у метри кубічні (m³) для подальших розрахунків!**
         
         2. **Розрахунок різниці тисків на кінцях капіляра:**
            \[\Delta P = \rho_ж \cdot g \cdot \Delta H\]
@@ -168,7 +153,7 @@ with col_main:
            \[\rho = \frac{P_a \cdot \mu}{R_{\text{gas}} \cdot T}\]
            де μ = 0.029 кг/моль, \(R_{\text{gas}} = 8.314 \text{ Дж/(моль}\cdot\text{К)}\), T = t(°C) + 273.15, \(P_a\) — атмосферний тиск у Паскалях.
         
-        5. **Розрахунок середньої арифметичної尋 швидкості молекул \(V_{\text{cp}}\):**
+        5. **Розрахунок середньої арифметичної швидкості молекул \(V_{\text{cp}}\):**
            \[V_{\text{cp}} = \sqrt{\frac{8 \cdot R_{\text{gas}} \cdot T}{\pi \cdot \mu}}\]
         
         6. **Розрахунок середньої довжини вільного пробігу λ:**
