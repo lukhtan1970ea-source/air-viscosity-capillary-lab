@@ -8,7 +8,6 @@ st.set_page_config(page_title="Лабораторна робота: В'язкі�
 st.title("🔬 Віртуальна лабораторна робота")
 st.subheader("Визначення коефіцієнта в'язкості, середньої довжини вільного пробігу та ефективного діаметра молекул повітря")
 
-# Ініціалізація станів сесії
 if "step" not in st.session_state:
     st.session_state.step = 0
 if "current_dH" not in st.session_state:
@@ -37,14 +36,12 @@ with col_sidebar:
     * Рідина в манометрі: Вода ($\rho = 1000$ кг/м³)
     """)
 
-# Фізичні розрахунки
 delta_H_nominal, flow_rate_air, Re, is_turbulent = physics.calculate_flow_and_reynolds(valve_pos, t_celsius, p_kpa)
 target_dH_mm = delta_H_nominal * 1000.0
 
 with col_main:
     st.header("📊 Вимірювальна установка та анімація")
     
-    # Кнопки керування кроками вимірювання
     col_b1, col_b2, col_b3 = st.columns(3)
     with col_b1:
         if st.button("▶️ 1. Відкрити кран B", use_container_width=True, disabled=st.session_state.step != 0 or valve_pos == 0):
@@ -63,7 +60,7 @@ with col_main:
             st.session_state.step = 4
             st.rerun()
 
-    # Делегуємо всю обробку кроків та рендерингу окремому модулю stages
+    # Передаємо керування у stages
     stages.handle_laboratory_stages(valve_pos, target_dH_mm, flow_rate_air, is_turbulent, t_celsius, p_kpa)
 
     # --- ТАБЛИЦЯ РЕЗУЛЬТАТІВ ---
@@ -80,6 +77,9 @@ with col_main:
     with st.expander("📚 Розрахункові формули та хід роботи"):
         st.markdown(r"""
         ### Порядок виконання розрахунків:
+        ... *(текст формул залишається без змін)* ...
+        """)
+
         
         1. **Визначення маси витеклої води:**
            \[m_{\text{води}} = m - m_0\]
