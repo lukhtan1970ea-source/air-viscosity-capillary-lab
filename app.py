@@ -1,13 +1,12 @@
 import streamlit as st
 import numpy as np
-import matplotlib.pyplot as plt
 import time
-import random
 
-# Імпорт фізичної логіки з нашого першого файлу
+# Импортируем наши модули физики и графики
 import physics
+import render
 
-# Налаштування сторінки Streamlit
+# Настройка страницы Streamlit
 st.set_page_config(page_title="Лабораторна робота: В'язкість повітря", layout="wide")
 
 # Заголовок та опис роботи
@@ -39,6 +38,9 @@ with col_sidebar:
 delta_H_nominal, flow_rate_air, Re, is_turbulent = physics.calculate_flow_and_reynolds(
     valve_pos, t_celsius, p_kpa
 )
+
+# Переводимо номінальну висоту манометра в міліметри для рендерингу
+dH_mm_nominal = delta_H_nominal * 1000.0
 
 # Ініціалізація сесії для збереження стану вимірювань
 if "experiment_running" not in st.session_state:
@@ -76,8 +78,8 @@ with col_main:
             st.session_state.history = []
             st.rerun()
 
-    # Слот для динамічної графіки (Манометр та Анімація)
-    plot_placeholder = st.empty()
+    # Слот для відображення красивої SVG-схеми установки
+    installation_placeholder = st.empty()
     status_placeholder = st.empty()
     
     # --- ЕКРАН ПРОЦЕСУ ВИМІРЮВАННЯ (АНІМАЦІЯ) ---
@@ -86,7 +88,7 @@ with col_main:
         v_collected_cm3 = 0.0
         m0 = 62.44
         
-        # Цикл імітації реального часу
+        # Цикл імітації реального часу (40 кроків)
         for _ in range(40):
             if not st.session_state.experiment_running:
                 break
@@ -96,58 +98,42 @@ with col_main:
             v_collected_cm3 += (flow_rate_air * 0.5) * 1e6 
             current_mass = m0 + v_collected_cm3
             
-            # Тремтіння манометру при турбулентності
-            jitter = random.uniform(-4.0, 4.0) if is_turbulent else 0.0
-            dH_mm_animated = (delta_H_nominal * 1000) + jitter
+            # Рендеримо динамічний SVG з поточним часом та станом
+            svg_code = render.get_svg_installation(
+                valve_pos=valve_pos,
+                dH_mm=dH_mm_nominal,
+                is_running=True,
+                sim_time=sim_time,
+                is_turbulent=is_turbulent
+            )
             
-            # Малювання U-подібного манометра
-            fig, ax = plt.subplots(figsize=(6, 3.5))
-            water_left = 100.0 - (dH_mm_animated / 2.0)
-            water_right = 100.0 + (dH_mm_animated / 2.0)
+            # Вивід інсталяції на екран як HTML
+            installation_placeholder.html(svg_code)
             
-            ax.bar([1, 2], [water_left, water_right], color="royalblue", width=0.4, edgecolor="black", linewidth=1.5)
-            ax.set_xlim(0.3, 2.7)
-            ax.set_ylim(0, 200)
-            ax.set_xticks([1, 2])
-            ax.set_xticklabels(["Ліве коліно\n(до судини)", "Праве коліно\n(атмосфера)"], fontsize=10)
-            ax.set_ylabel("Рівень рідини, мм", fontsize=10)
-            ax.set_title("U-подібний рідинний манометр М", fontsize=12, fontweight="bold")
-            ax.grid(axis='y', linestyle='--', alpha=0.5)
-            
-            ax.text(1.5, 170, f"ΔH ≈ {round(dH_mm_animated, 1)} мм", fontsize=12, color="darkred", weight="bold", ha="center")
-            
-            plot_placeholder.pyplot(fig)
-            plt.close(fig)
-            
-            # Текстовий статус вимірювання
+            # Текстовий статус вимірювання bawah
             water_drops = "💧 " * (int(sim_time) % 4 + 1)
             status_placeholder.markdown(f"""
             ### ⏳ Триває вимірювання...
             * **Поточний час (секундомір):** `{round(sim_time, 1)} с`
-            * **Маса стакана з водою (поточна):** `{round(current_mass, 1)} г`
+            * **Маса стакана з водою (поточна вага):** `{round(current_mass, 1)} г`
             * **Статус крана:** Вода витікає краплинами... {water_drops}
             """)
             
             if is_turbulent:
                 st.warning("⚠️ УВАГА! Потік повітря став турбулентним (Число Re > 1500). Закон Пуазейля БІЛЬШЕ НЕ ВИКОНУЄТЬСЯ! Манометр нестабільний (тремтить). Терміново прикрийте кран B.")
             
-            time.sleep(0.1) # Швидкість оновлення кадрів
+            time.sleep(0.1) # Швидкість кадрів
             
     else:
-        # Статичний стан установки
-        fig, ax = plt.subplots(figsize=(6, 3.5))
-        ax.bar([1, 2], [100, 100], color="royalblue", width=0.4, edgecolor="black", linewidth=1.5)
-        ax.set_xlim(0.3, 2.7)
-        ax.set_ylim(0, 200)
-        ax.set_xticks([1, 2])
-        ax.set_xticklabels(["Ліве коліно\n(до судини)", "Праве коліно\n(атмосфера)"])
-        ax.set_ylabel("Рівень рідини, мм")
-        ax.set_title("U-подібний рідинний манометр М (Установка зупинена)")
-        ax.grid(axis='y', linestyle='--', alpha=0.5)
-        ax.text(1.5, 110, "ΔH = 0.0 мм", fontsize=12, color="gray", weight="bold", ha="center")
-        
-        plot_placeholder.pyplot(fig)
-        plt.close(fig)
+        # Статичний стан установки (коли дослід не запущено)
+        svg_code = render.get_svg_installation(
+            valve_pos=valve_pos,
+            dH_mm=0.0, # При закритому крані тиск вирівняний
+            is_running=False,
+            sim_time=0.0,
+            is_turbulent=is_turbulent
+        )
+        installation_placeholder.html(svg_code)
         status_placeholder.info("Установка готова до роботи. Налаштуйте ступінь відкриття крана та натисніть 'Старт'.")
         
         if is_turbulent and valve_pos > 0:
@@ -167,7 +153,7 @@ with col_main:
         
         1. **Визначення маси витеклої води:**
            \[m_{\text{води}} = m - m_0\]
-           Оскільки густина води \(\rho_ж = 1.0 \text{ г/см}^3\), отримане значення маси в грамах чисельно дорівнює об'єму витеклої води (а отже, і об'єму повітря V, що пройшло крізь капіляр) у кубічних сантиметрах (см³). **Переведіть об'єм V у метри кубічные (m³) для подальших розрахунків!**
+           Оскільки густина води \(\rho_ж = 1.0 \text{ г/см}^3\), отримане значення маси в грамах чисельно дорівнює об'єму витеклої води (а отже, і об'єму повітря V, що пройшло крізь капіляр) у кубічних сантиметрах (см³). **Переведіть об'єм V у метри кубічні (m³) для подальших розрахунків!**
         
         2. **Розрахунок різниці тисків на кінцях капіляра:**
            \[\Delta P = \rho_ж \cdot g \cdot \Delta H\]
@@ -181,7 +167,7 @@ with col_main:
            \[\rho = \frac{P_a \cdot \mu}{R_{\text{gas}} \cdot T}\]
            де μ = 0.029 кг/моль, \(R_{\text{gas}} = 8.314 \text{ Дж/(моль}\cdot\text{К)}\), T = t(°C) + 273.15, \(P_a\) — атмосферний тиск у Паскалях.
         
-        5. **Розрахунок середньої арифметичної швидкості молекул \(V_{\text{cp}}\):**
+        5. **Розрахунок середньої арифметичної尋 швидкості молекул \(V_{\text{cp}}\):**
            \[V_{\text{cp}} = \sqrt{\frac{8 \cdot R_{\text{gas}} \cdot T}{\pi \cdot \mu}}\]
         
         6. **Розрахунок середньої довжини вільного пробігу λ:**
@@ -191,4 +177,3 @@ with col_main:
            \[G = \sqrt{\frac{k_B \cdot T}{\sqrt{2} \cdot \pi \cdot \lambda \cdot P_a}}\]
            де \(k_B = 1.38 \cdot 10^{-23} \text{ Дж/К}\).
         """)
-
