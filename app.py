@@ -12,7 +12,8 @@ st.set_page_config(page_title="Лабораторна робота: В'язкі�
 st.title("🔬 Віртуальна開放 лабораторна робота")
 st.subheader("Визначення коефіцієнта в'язкості, середньої довжини вільного пробігу та ефективного діаметра молекул повітря")
 
-col_sidebar, col_main = st.columns()
+col_sidebar, col_main = st.columns([1, 2])
+
 
 with col_sidebar:
     st.header("⚙️ Параметри середовища")
