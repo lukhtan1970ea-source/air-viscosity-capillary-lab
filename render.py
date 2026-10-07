@@ -2,7 +2,7 @@ import random
 
 def get_svg_installation(valve_pos, dH_mm, is_running, sim_time, is_turbulent):
     """
-    Генерує чистий SVG-код лабораторної установки.
+    Генерує чистий HTML/SVG-код лабораторної установки.
     Розмір полотна: 800x450 пікселів.
     """
     # Ефект тремтіння рівнів манометра при турбулентності
@@ -30,18 +30,21 @@ def get_svg_installation(valve_pos, dH_mm, is_running, sim_time, is_turbulent):
     if is_dripping and drop_y < 380:
         drop_element = f'<circle cx="320" cy="{drop_y}" r="3" fill="#007bff" />'
 
-    # Рендеринг SVG з екранованими стилями (стилі вставляємо окремим блоком без f-форматування)
-    svg = f"""
-    <svg width="100%" height="450" viewBox="0 0 800 450" xmlns="http://w3.org" style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
-        
-        <defs>
-            <style>
-                .lbl-txt {{ font-family: sans-serif; font-size: 14px; fill: #333; font-weight: bold; }}
-                .sub-lbl {{ font-family: sans-serif; font-size: 11px; fill: #666; }}
-                .main-title {{ font-family: sans-serif; font-size: 16px; fill: #111; font-weight: bold; text-anchor: middle; }}
-                .sc-txt {{ font-family: monospace; font-size: 9px; fill: #555; }}
-            </style>
-        </defs>
+    # Огортаємо SVG в повну HTML структуру, щоб Streamlit Components безвідмовно її з'їв
+    html_src = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ margin: 0; padding: 0; background-color: #f8f9fa; overflow: hidden; }}
+            .lbl-txt {{ font-family: sans-serif; font-size: 14px; fill: #333; font-weight: bold; }}
+            .sub-lbl {{ font-family: sans-serif; font-size: 11px; fill: #666; }}
+            .main-title {{ font-family: sans-serif; font-size: 16px; fill: #111; font-weight: bold; text-anchor: middle; }}
+            .sc-txt {{ font-family: monospace; font-size: 9px; fill: #555; }}
+        </style>
+    </head>
+    <body>
+    <svg width="100%" height="440" viewBox="0 0 800 440" xmlns="http://w3.org" style="border: 1px solid #dee2e6; border-radius: 8px;">
         
         <text x="400" y="30" class="main-title">Схема експериментальної установки</text>
 
@@ -102,5 +105,7 @@ def get_svg_installation(valve_pos, dH_mm, is_running, sim_time, is_turbulent):
         <text x="140" y="405" class="lbl-txt" fill="royalblue" text-anchor="middle">Манометр М</text>
 
     </svg>
+    </body>
+    </html>
     """
-    return svg
+    return html_src
