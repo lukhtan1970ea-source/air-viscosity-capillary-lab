@@ -1,8 +1,8 @@
 import random
 
-def get_svg_installation(valve_pos, dH_mm, is_running, sim_time, is_turbulent):
+def get_html_installation(valve_pos, dH_mm, is_running, sim_time, is_turbulent):
     """
-    Генерує чистий SVG-код лабораторної установки для прямого вбудовування через st.html.
+    Генерує чистий HTML/SVG-код лабораторної установки для виведення через iframe.
     Розмір полотна: 800x440 пікселів.
     """
     # Ефект тремтіння рівнів манометра при турбулентності
@@ -20,7 +20,7 @@ def get_svg_installation(valve_pos, dH_mm, is_running, sim_time, is_turbulent):
     # Поворот ручки крана залежно від відсотка відкриття
     valve_angle = (valve_pos / 100.0) * 90.0
 
-    # Окремо форми стакана для динамічного відображення води всередині
+    # Форми стакана для динамічного відображення води
     water_in_cup = ""
     if is_running:
         water_in_cup = '<path d="M 299,415 Q 320,417 341,415 L 343,430 Q 320,433 301,430 Z" fill="rgba(0, 123, 255, 0.4)" />'
@@ -30,18 +30,21 @@ def get_svg_installation(valve_pos, dH_mm, is_running, sim_time, is_turbulent):
     if is_dripping and drop_y < 380:
         drop_element = f'<circle cx="320" cy="{drop_y}" r="3" fill="#007bff" />'
 
-    # Повертаємо чистий SVG із правильно екранованими подвійними дужками для CSS
-    svg = f"""
-    <svg width="100%" height="440" viewBox="0 0 800 440" xmlns="http://w3.org" style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
-        
-        <defs>
-            <style>
-                .lbl-txt {{ font-family: sans-serif; font-size: 14px; fill: #333; font-weight: bold; }}
-                .sub-lbl {{ font-family: sans-serif; font-size: 11px; fill: #666; }}
-                .main-title {{ font-family: sans-serif; font-size: 16px; fill: #111; font-weight: bold; text-anchor: middle; }}
-                .sc-txt {{ font-family: monospace; font-size: 9px; fill: #555; }}
-            </style>
-        </defs>
+    # Полная чистая верстка, защищенная от санитизатора Streamlit
+    html_src = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ margin: 0; padding: 0; background-color: #f8f9fa; overflow: hidden; }}
+            .lbl-txt {{ font-family: sans-serif; font-size: 13px; fill: #333; font-weight: bold; }}
+            .sub-lbl {{ font-family: sans-serif; font-size: 11px; fill: #666; }}
+            .main-title {{ font-family: sans-serif; font-size: 15px; fill: #111; font-weight: bold; text-anchor: middle; }}
+            .sc-txt {{ font-family: monospace; font-size: 9px; fill: #555; }}
+        </style>
+    </head>
+    <body>
+    <svg width="780" height="420" viewBox="0 0 800 440" xmlns="http://w3.org" style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 8px;">
         
         <text x="400" y="30" class="main-title">Схема експериментальної установки</text>
 
@@ -55,7 +58,7 @@ def get_svg_installation(valve_pos, dH_mm, is_running, sim_time, is_turbulent):
         <rect x="470" y="70" width="160" height="110" rx="6" fill="#f1f3f5" stroke="#adb5bd" stroke-width="2" />
         <text x="550" y="92" class="lbl-txt" text-anchor="middle">Капіляр К</text>
         
-        <!-- Скручений змійкою капіляр -->
+        <!-- Скручений змійкою капіляр всередині -->
         <path d="M 480,120 Q 510,95 540,120 T 600,120" fill="none" stroke="#17a2b8" stroke-width="3" stroke-linecap="round" />
         <path d="M 480,140 Q 510,115 540,140 T 600,140" fill="none" stroke="#17a2b8" stroke-width="3" stroke-linecap="round" />
 
@@ -102,5 +105,7 @@ def get_svg_installation(valve_pos, dH_mm, is_running, sim_time, is_turbulent):
         <text x="140" y="405" class="lbl-txt" fill="royalblue" text-anchor="middle">Манометр М</text>
 
     </svg>
+    </body>
+    </html>
     """
-    return svg
+    return html_src
