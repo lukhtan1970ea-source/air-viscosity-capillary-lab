@@ -1,19 +1,21 @@
 import streamlit as st
+import streamlit.components.v1 as components  # Возвращаем для стабильного рендеринга
 import numpy as np
 import time
 
-# Імпортуємо наші модулі фізики та графіки
+# Импортируем наши модули физики и графики
 import physics
 import render
 
-# Настройка сторінки Streamlit
+# Настройка страницы Streamlit
 st.set_page_config(page_title="Лабораторна робота: В'язкість повітря", layout="wide")
 
-st.title("🔬 Віртуальна開放 лабораторна робота")
+# Исправленный чистый заголовок без битых символов
+st.title("🔬 Віртуальна лабораторна робота")
 st.subheader("Визначення коефіцієнта в'язкості, середньої довжини вільного пробігу та ефективного діаметра молекул повітря")
 
+# Исправленный вызов колонок (пропорции 1 к 2)
 col_sidebar, col_main = st.columns([1, 2])
-
 
 with col_sidebar:
     st.header("⚙️ Параметри середовища")
@@ -26,9 +28,9 @@ with col_sidebar:
     st.markdown("---")
     st.markdown(f"""
     **Довідкові дані установки:**
-    * Довжина капіляра \(L = {physics.L}\) м
+    * Довжина капіляра L = physics.L м
     * Радіус капіляра \(R = {physics.R_cap}\) м
-    * Рідина в манометрі: Вода (\(\rho = 1000\) кг/м³)
+    * Рідина в манометрі: Вода (ρ = 1000 кг/м³)
     """)
 
 # --- ФІЗИЧНИЙ РОЗРАХУНОК ---
@@ -68,7 +70,7 @@ with col_main:
             st.session_state.history = []
             st.rerun()
 
-    # Слот контейнера
+    # Слот контейнера для графики
     installation_placeholder = st.empty()
     status_placeholder = st.empty()
     
@@ -86,7 +88,7 @@ with col_main:
             v_collected_cm3 += (flow_rate_air * 0.25) * 1e6 
             current_mass = m0 + v_collected_cm3
             
-            svg_code = render.get_svg_installation(
+            html_code = render.get_html_installation(
                 valve_pos=valve_pos,
                 dH_mm=dH_mm_nominal,
                 is_running=True,
@@ -94,8 +96,9 @@ with col_main:
                 is_turbulent=is_turbulent
             )
             
-            # Пряме нативне оновлення через .html() без використання iframe
-            installation_placeholder.html(svg_code)
+            # Стабильный вывод iframe с жестко заданной высотой
+            with installation_placeholder:
+                components.html(html_code, height=450, scrolling=False)
             
             water_drops = "💧 " * (int(sim_time * 2) % 4 + 1)
             status_placeholder.markdown(f"""
@@ -111,16 +114,17 @@ with col_main:
             time.sleep(0.05)
             
     else:
-        # Статичний стан установки
-        svg_code = render.get_svg_installation(
+        # Статический съём установки при остановке
+        html_code = render.get_html_installation(
             valve_pos=valve_pos,
             dH_mm=0.0,
             is_running=False,
             sim_time=0.0,
             is_turbulent=is_turbulent
         )
-        # Виводимо графіку нативно
-        installation_placeholder.html(svg_code)
+        with installation_placeholder:
+            components.html(html_code, height=450, scrolling=False)
+            
         status_placeholder.info("Установка готова до роботи. Налаштуйте ступінь відкриття крана та натисніть 'Старт'.")
         
         if is_turbulent and valve_pos > 0:
@@ -140,7 +144,7 @@ with col_main:
         
         1. **Визначення маси витеклої води:**
            \[m_{\text{води}} = m - m_0\]
-           Оскільки густина води \(\rho_ж = 1.0 \text{ г/см}^3\), отримане значение маси в грамах чисельно дорівнює об'єму витеклої води (а отже, і об'єму повітря V, що пройшло крізь капіляр) у кубічних сантиметрах (см³). **Переведіть об'єм V у метри кубічні (m³) для подальших розрахунків!**
+           Оскільки густина води \(\rho_ж = 1.0 \text{ г/см}^3\), отримане значення маси в грамах чисельно дорівнює об'єму витеклої води (а отже, і об'єму повітря V, що пройшло крізь капіляр) у кубічних сантиметрах (см³). **Переведіть об'єм V у метри кубічні (m³) для подальших розрахунків!**
         
         2. **Розрахунок різниці тисків на кінцях капіляра:**
            \[\Delta P = \rho_ж \cdot g \cdot \Delta H\]
