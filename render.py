@@ -8,6 +8,9 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     valve_angle = (valve_pos / 100.0) * 90.0 if flow_mode != 'none' else 0.0
     delta_px = (target_dH_mm * 0.6) if flow_mode != 'none' else 0.0
     
+    # Визначаємо режим відображення таймера на самому початку функції
+    timer_display = "block" if cup_type == 'work' else "none"
+    
     # Режим для JS: 1 - тиск росте/стабільний, 0 - тиску немає (кран закритий)
     js_mode = 1 if flow_mode in ['stream', 'drops'] else 0
 
@@ -99,7 +102,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     if cup_type == 'vspom':
         cup_element = """
         <path d="M 300,385 L 303,425 Q 320,428 337,425 L 340,385" fill="none" stroke="#6c757d" stroke-width="2.5" />
-        <path d="M 302,410 Q 320,412 338,410 L 339,424 Q 320,427 302.5,424 Z" fill="rgba(108, 117, 125, 0.35)" />
+        <path d="M 299,412 Q 320,414 341,412 L 342,427 Q 320,430 301,427 Z" fill="rgba(108, 117, 125, 0.35)" />
         <text x="320" y="405" font-family="sans-serif" font-size="10" fill="#555" text-anchor="middle">Допоміжний</text>
         """
     elif cup_type == 'work':
@@ -192,7 +195,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             <path d="M 110,200 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,200" 
                   fill="none" stroke="#555" stroke-width="16" stroke-linecap="round" style="opacity: 0.15;" />
 
-            <!-- === ЦІЛЬНИЙ КОНТУР ВОДИ: ЗМІНЮЄТЬСЯ ДИНАМІЧНО ЧЕРЕЗ JS === -->
+            <!-- === МОНОЛІТНЕ ЦІЛЬНЕ ВОДНЕ ТІЛО МАНОМЕТРА === -->
             <path id="v-water-contour" d="M 110,280 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,280" 
                   fill="none" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
         </g>
