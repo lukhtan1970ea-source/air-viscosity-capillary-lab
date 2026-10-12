@@ -3,13 +3,13 @@ import layout
 def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbulent):
     """
     Модуль збірки інтерфейсу лабораторної роботи. 
-    Імпортує контур сцени з layout і нативно підставляє змінні.
+    Уповільнює динаміку манометра, роблячи рух рідини інерційним та затяжним.
     """
     valve_angle = (valve_pos / 100.0) * 90.0 if flow_mode != 'none' else 0.0
     delta_px = (target_dH_mm * 0.6) if flow_mode != 'none' else 0.0
     js_mode = 1 if flow_mode in ['stream', 'drops'] else 0
 
-    # Нативний JS-двигун
+    # Нативний JS-двигун з уповільненою інерційною швидкістю ходу (коефіцієнт 0.012 замість 0.05)
     js_engine = f"""
     <script>
         let currentShift = 0;
@@ -18,13 +18,15 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         
         function animateManometer() {{
             if (mode === 1) {{
+                // Робимо підйом значно повільнішим та інерційним, розтягуючи його на всю фазу струменя
                 if (currentShift < targetShift) {{
-                    currentShift += (targetShift - currentShift) * 0.05 + 0.1;
+                    currentShift += (targetShift - currentShift) * 0.012 + 0.03;
                     if (currentShift > targetShift) currentShift = targetShift;
                 }}
             }} else {{
+                // Плавне повернення на нуль при закритті крана
                 if (currentShift > 0) {{
-                    currentShift -= currentShift * 0.1 + 0.2;
+                    currentShift -= currentShift * 0.05 + 0.1;
                     if (currentShift < 0) currentShift = 0;
                 }}
             }}
@@ -109,7 +111,6 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         <text x="320" y="375" font-family="sans-serif" font-size="11" fill="#0056b3" font-weight="bold" text-anchor="middle">РОБОЧИЙ</text>
         """
 
-    # Формируем финальный код путем подстановки в шаблон из layout
     return layout.SVG_TEMPLATE.format(
         timer_display=timer_display,
         css_animation=css_animation,
