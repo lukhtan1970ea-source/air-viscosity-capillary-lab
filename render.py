@@ -1,31 +1,27 @@
-import random
+# render.py
+import layout
 
 def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbulent, current_time_sec=0.0):
     """
-    Генерує схему установки з монолітним красивим манометром.
-    Анімація підйому робиться через JS на клієнті, що дає 60 FPS без скачків від сервера.
+    Збирає лабораторну установку, підставляючи змінні у стабільний шаблон.
     """
     valve_angle = (valve_pos / 100.0) * 90.0 if flow_mode != 'none' else 0.0
     delta_px = (target_dH_mm * 0.6) if flow_mode != 'none' else 0.0
     
-    # Визначаємо режим відображення таймера на самому початку функції
     timer_display = "block" if cup_type == 'work' else "none"
-    
-    # Режим для JS: 1 - тиск росте/стабільний, 0 - тиску немає (кран закритий)
     js_mode = 1 if flow_mode in ['stream', 'drops'] else 0
+    js_initial_shift = 0.0 if flow_mode == 'stream' else delta_px
 
-    # Вбудований JS-двигун для плавної інтерполяції дуги манометра
+    # Нативний клієнтський скрипт
     js_engine = f"""
     <script>
-        let currentShift = 0;
+        let currentShift = {js_initial_shift}; 
         const targetShift = {delta_px};
         const mode = {js_mode};
         
-        // Функція плавної промальовки манометра (60 кадрів/сек)
         function animateManometer() {{
             if (mode === 1) {{
                 if (currentShift < targetShift) {{
-                    // Дуже повільний інерційний підйом, розтягнутий на 6-7 секунд
                     currentShift += (targetShift - currentShift) * 0.015 + 0.02;
                     if (currentShift > targetShift) currentShift = targetShift;
                 }}
@@ -36,18 +32,15 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
                 }}
             }}
             
-            // Розраховуємо Y-координати для монолітного контуру
             let leftY = (280 + currentShift).toFixed(1);
             let rightY = (280 - currentShift).toFixed(1);
             
-            // Формуємо новий шлях для цільного водяного тіла манометра
             let newPath = `M 110,${{leftY}} L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,${{rightY}}`;
             document.getElementById('v-water-contour').setAttribute('d', newPath);
             
             requestAnimationFrame(animateManometer);
         }}
         
-        // Робота секундоміра
         if ("{cup_type}" === "work") {{
             let start = Date.now() - ({current_time_sec} * 1000);
             setInterval(() => {{
@@ -119,93 +112,17 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         <text x="320" y="375" font-family="sans-serif" font-size="11" fill="#0056b3" font-weight="bold" text-anchor="middle">РОБОЧИЙ</text>
         """
 
-    html_src = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body {{ margin: 0; padding: 0; background-color: #f8f9fa; overflow: hidden; display: flex; flex-direction: column; align-items: center; }}
-            .lbl-txt {{ font-family: sans-serif; font-size: 13px; fill: #333; font-weight: bold; }}
-            .main-title {{ font-family: sans-serif; font-size: 15px; fill: #111; font-weight: bold; text-anchor: middle; }}
-            .sc-txt {{ font-family: monospace; font-size: 9px; fill: #555; }}
-            .timer-box {{
-                display: {timer_display};
-                position: absolute;
-                top: 75px;
-                right: 40px;
-                background: #333;
-                color: #0f0;
-                padding: 6px 12px;
-                font-family: monospace;
-                font-size: 18px;
-                border-radius: 4px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            }}
-            {css_animation}
-        </style>
-    </head>
-    <body>
-    
-    <div class="timer-box">⏱️ Секундомір: <span id="js-timer">0.0 с</span></div>
+    init_left_y = 280.0 + js_initial_shift
+    init_right_y = 280.0 - js_initial_shift
 
-    <svg width="760" height="420" viewBox="0 0 800 440" xmlns="http://w3.org" style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 8px;">
-        
-        <text x="400" y="30" class="main-title">Схема експериментальної установки</text>
-
-        <!-- 1. СУДИНА А -->
-        <rect x="250" y="80" width="140" height="220" rx="10" fill="none" stroke="#555" stroke-width="3" />
-        <rect x="290" y="70" width="60" height="10" fill="#333" rx="2" />
-        <path d="M 251.5,150 Q 320,152 388.5,150 L 388.5,298.5 L 251.5,298.5 Z" fill="rgba(0, 123, 255, 0.23)" class="vessel-water" />
-        <text x="320" y="190" class="lbl-txt" fill="#0056b3" text-anchor="middle">Судина А</text>
-        {bubbles}
-        
-        <!-- 2. БЛОК З КАПІЛЯРОМ К -->
-        <rect x="490" y="90" width="160" height="90" rx="6" fill="#f1f3f5" stroke="#adb5bd" stroke-width="2" />
-        <text x="570" y="112" class="lbl-txt" text-anchor="middle">Капіляр К</text>
-        <path d="M 500,140 Q 530,120 560,140 T 620,140" fill="none" stroke="#17a2b8" stroke-width="3" stroke-linecap="round" />
-
-        <!-- 3. ГЕРМЕТИЧНІ ТРУБКИ ПО МЕТОДИЦІ -->
-        <path d="M 490,140 L 320,140 L 320,80" fill="none" stroke="#555" stroke-width="2.5" />
-        <path d="M 650,140 L 690,140 L 690,60" fill="none" stroke="#555" stroke-width="2.5" />
-        <path d="M 350,80 L 350,60 L 140,60 L 140,200" fill="none" stroke="#555" stroke-width="2.5" />
-
-        <!-- 4. КРАН В ТА СТАКАН -->
-        <path d="M 320,300 L 320,330" fill="none" stroke="#555" stroke-width="3" />
-        <circle cx="320" cy="330" r="10" fill="#6c757d" stroke="#333" stroke-width="1.5" />
-        <g transform="translate(320,330) rotate({valve_angle})">
-            <rect x="-4" y="-18" width="8" height="36" fill="#dc3545" rx="2" />
-            <circle cx="0" cy="0" r="5" fill="#fff" />
-        </g>
-        <text x="345" y="335" class="lbl-txt">Кран B</text>
-        
-        {cup_element}
-        {water_flow_element}
-
-        <!-- 5. U-ПОДІБНИЙ МАНОМЕТР М -->
-        <g class="mano-group">
-            <rect x="115" y="180" width="50" height="200" fill="#fff" stroke="#ced4da" />
-            <line x1="140" y1="200" x2="140" y2="360" stroke="#aaa" stroke-width="1" />
-            <line x1="130" y1="280" x2="150" y2="280" stroke="#333" stroke-width="1.5" />
-            <text x="154" y="283" class="sc-txt" style="font-weight:bold;">0</text>
-            <line x1="133" y1="220" x2="147" y2="220" stroke="#777" stroke-width="1" />
-            <text x="154" y="223" class="sc-txt">+100</text>
-            <line x1="133" y1="340" x2="147" y2="340" stroke="#777" stroke-width="1" />
-            <text x="154" y="343" class="sc-txt">-100</text>
-
-            <path d="M 110,200 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,200" 
-                  fill="none" stroke="#555" stroke-width="16" stroke-linecap="round" style="opacity: 0.15;" />
-
-            <!-- === МОНОЛІТНЕ ЦІЛЬНЕ ВОДНЕ ТІЛО МАНОМЕТРА === -->
-            <path id="v-water-contour" d="M 110,280 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,280" 
-                  fill="none" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
-        </g>
-              
-        <text x="140" y="405" class="lbl-txt" fill="royalblue" text-anchor="middle">Манометр М</text>
-
-    </svg>
-    
-    {js_engine}
-    </body>
-    </html>
-    """
-    return html_src
+    return layout.BASE_TEMPLATE.format(
+        timer_display=timer_display,
+        css_animation=css_animation,
+        init_left_y=init_left_y,
+        init_right_y=init_right_y,
+        valve_angle=valve_angle,
+        bubbles=bubbles,
+        cup_element=cup_element,
+        water_flow_element=water_flow_element,
+        js_engine=js_engine
+    )
