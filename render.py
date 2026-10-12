@@ -3,13 +3,22 @@ import random
 def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbulent):
     """
     Абсолютно плавна анімація 60 FPS. 
-    Манометр плавно витискається з нуля (Y=280) у різні боки за допомогою CSS scaleY.
+    Манометр розділений на коліна та анімується через CSS transition висоти прямокутників,
+    що повністю усуває спотворення геометрії та зміщення рідини.
     """
-    # Цільові рівні манометра
-    left_knee_y = 280 + (target_dH_mm * 0.6)
-    right_knee_y = 280 - (target_dH_mm * 0.6)
-    
     valve_angle = (valve_pos / 100.0) * 90.0 if flow_mode != 'none' else 0.0
+    
+    # Розрахунок зміни висоти стовпчиків рідини в мм (1 мм = 0.6 пікселя на схемі)
+    # Якщо кран закритий, зміна дорівнює 0
+    delta_pixels = (target_dH_mm * 0.6) if flow_mode != 'none' else 0.0
+    
+    # Базові параметри стовпчиків манометра при рівності тисків (dH = 0, рівень Y = 280)
+    # Висота лівого і правого вертикальних стовпчиків у спокої — 70 пікселів (від Y=210 до Y=280)
+    left_height = 70.0 + delta_pixels
+    left_y = 210.0 - delta_pixels
+    
+    right_height = 70.0 - delta_pixels
+    right_y = 210.0 + delta_pixels
     
     # Клієнтський секундомір (JS)
     js_timer_script = ""
@@ -29,22 +38,15 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     css_animation = ""
     water_flow_element = ""
     bubbles = ""
-    manometer_class = "v-water-static"
 
-    # Фізична CSS анімація: витискання води з нульової лінії (Y=280) у різні боки
-    if flow_mode == 'stream' or flow_mode == 'drops':
-        manometer_class = "v-water-animated"
-        css_animation += """
-        @keyframes pressure_push {
-            from { transform: scaleY(0); transform-origin: 140px 280px; }
-            to { transform: scaleY(1); transform-origin: 140px 280px; }
-        }
-        .v-water-animated {
-            animation: pressure_push 8.0s cubic-bezier(0.1, 0.5, 0.15, 1.0) forwards;
-        }
-        """
+    # Додаємо плавність ходу рівнів манометра засобами CSS (плавний перехід за 8 секунд)
+    css_animation += """
+    .mano-column {
+        transition: transform 8.0s cubic-bezier(0.1, 0.5, 0.2, 1.0), y 8.0s cubic-bezier(0.1, 0.5, 0.2, 1.0), height 8.0s cubic-bezier(0.1, 0.5, 0.2, 1.0);
+    }
+    """
 
-    # Турбулентне тремтіння (накладається на всю групу манометра)
+    # Турбулентне тремтіння (накладається на всю групу манометра при нестабільному потоці)
     if flow_mode != 'none' and is_turbulent:
         css_animation += """
         @keyframes jitter {
@@ -167,6 +169,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
 
         <!-- 5. U-ПОДІБНИЙ МАНОМЕТР М -->
         <g class="mano-group">
+            <!-- Шкала та металева основа манометра -->
             <rect x="115" y="180" width="50" height="200" fill="#fff" stroke="#ced4da" />
             <line x1="140" y1="200" x2="140" y2="360" stroke="#aaa" stroke-width="1" />
             <line x1="130" y1="280" x2="150" y2="280" stroke="#333" stroke-width="1.5" />
@@ -176,12 +179,20 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             <line x1="133" y1="340" x2="147" y2="340" stroke="#777" stroke-width="1" />
             <text x="154" y="343" class="sc-txt">-100</text>
 
+            <!-- Скляний задній контур трубки (Тінь) -->
             <path d="M 110,200 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,200" 
                   fill="none" stroke="#555" stroke-width="16" stroke-linecap="round" style="opacity: 0.15;" />
 
-            <!-- Анімоване водне тіло через масштаб із фіксованим центром на осі Y=280 -->
-            <path d="M 110,{left_knee_y} L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,{right_knee_y}" 
-                  fill="none" stroke="royalblue" stroke-width="10" stroke-linecap="round" class="{manometer_class}" />
+            <!-- === ФІЗИЧНО РОЗДІЛЕНА ВОДА В МАНОМЕТРІ === -->
+            <!-- 1. Статичне нижнє коліно (Завжди повне до відмітки Y=280) -->
+            <path d="M 110,280 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,280" 
+                  fill="none" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
+
+            <!-- 2. Ліве динамічне коліно (Рівень рідини падає при тиску) -->
+            <line x1="110" y1="{left_y}" x2="110" y2="281" stroke="royalblue" stroke-width="10" stroke-linecap="square" class="mano-column" />
+
+            <!-- 3. Праве динамічне коліно (Рівень рідини зростає при тиску) -->
+            <line x1="170" y1="{right_y}" x2="170" y2="281" stroke="royalblue" stroke-width="10" stroke-linecap="square" class="mano-column" />
         </g>
               
         <text x="140" y="405" class="lbl-txt" fill="royalblue" text-anchor="middle">Манометр М</text>
