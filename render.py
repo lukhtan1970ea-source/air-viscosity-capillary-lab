@@ -2,14 +2,19 @@ import random
 
 def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbulent):
     """
-    Абсолютно плавна анімація манометра без спотворення геометрії.
-    Зсув рівнів реалізовано через CSS трансформи та маскування, що працює нативно на 60 FPS.
+    Абсолютно плавна 60 FPS анімація за класичним методом (як у Стоксі та краплях).
+    Рівні манометра змінюються через нативну CSS-анімацію stroke-dashoffset.
     """
-    # Рахуємо чесний зсув для кожного коліна в пікселях (1 мм dH = 0.6 пікселя зсуву кожного коліна)
-    shift_pixels = (target_dH_mm * 0.6) if flow_mode != 'none' else 0.0
-    
     valve_angle = (valve_pos / 100.0) * 90.0 if flow_mode != 'none' else 0.0
     
+    # Розрахунок кінцевого зсуву рівнів у пікселях (1 мм = 0.6 пікселя)
+    delta_px = (target_dH_mm * 0.6) if flow_mode != 'none' else 0.0
+    
+    # Базовий рівень рідини у спокої — Y=280.
+    # Розраховуємо фінальні координати Y для лівого та правого коліна
+    left_y_final = 280.0 + delta_px
+    right_y_final = 280.0 - delta_px
+
     # Клієнтський секундомір (JS)
     js_timer_script = ""
     timer_display = "none"
@@ -25,23 +30,26 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         </script>
         """
 
-    css_animation = ""
-    water_flow_element = ""
-    bubbles = ""
-
-    # Нативна плавна анімація зсуву рівнів через CSS Transitions
-    css_animation += f"""
-    .left-fluid-mask {{
-        transform: translateY({shift_pixels}px);
-        transition: transform 8.0s cubic-bezier(0.1, 0.6, 0.2, 1.0);
+    # Динамічні CSS стилі для плавної зміни рівнів (так само, як рух шарика)
+    css_animation = f"""
+    @keyframes move_left_knee {{
+        from {{ stroke-dashoffset: {delta_px}; }}
+        to {{ stroke-dashoffset: 0; }}
     }}
-    .right-fluid-mask {{
-        transform: translateY({-shift_pixels}px);
-        transition: transform 8.0s cubic-bezier(0.1, 0.6, 0.2, 1.0);
+    @keyframes move_right_knee {{
+        from {{ stroke-dashoffset: {-delta_px}; }}
+        to {{ stroke-dashoffset: 0; }}
+    }}
+    
+    .animated-left {{
+        transition: y2 8.0s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }}
+    .animated-right {{
+        transition: y2 8.0s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }}
     """
 
-    # Турбулентне тремтіння (накладається при нестабільності)
+    # Турбулентне тремтіння при нестабільному потоці повітря
     if flow_mode != 'none' and is_turbulent:
         css_animation += """
         @keyframes jitter {
@@ -51,6 +59,8 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         .mano-group { animation: jitter 0.05s infinite alternate ease-in-out; }
         """
 
+    # Візуалізація потоку води (струмінь або каплі)
+    water_flow_element = ""
     if flow_mode == 'stream':
         water_flow_element = '<polygon points="318.5,330 321.5,330 321,395 319,395" fill="#007bff" opacity="0.8"/>'
     elif flow_mode == 'drops':
@@ -63,6 +73,8 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         """
         water_flow_element = '<circle cx="320" cy="335" r="3.5" fill="#007bff" class="fluid-drop" />'
 
+    # Анімація бульбашок повітря в судині А
+    bubbles = ""
     if flow_mode != 'none':
         css_animation += """
         @keyframes bubble_up {
@@ -78,7 +90,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         <circle cx="340" cy="270" r="2" fill="none" stroke="rgba(255,255,255,0.8)" class="b2" />
         """
 
-    # Візуалізація стаканів
+    # Візуалізація стаканів (Допоміжний / Робочий)
     cup_element = ""
     if cup_type == 'vspom':
         cup_element = """
@@ -164,7 +176,6 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
 
         <!-- 5. U-ПОДІБНИЙ МАНОМЕТР М -->
         <g class="mano-group">
-            <!-- Основа манометра та шкала -->
             <rect x="115" y="180" width="50" height="200" fill="#fff" stroke="#ced4da" />
             <line x1="140" y1="200" x2="140" y2="360" stroke="#aaa" stroke-width="1" />
             <line x1="130" y1="280" x2="150" y2="280" stroke="#333" stroke-width="1.5" />
@@ -174,30 +185,19 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             <line x1="133" y1="340" x2="147" y2="340" stroke="#777" stroke-width="1" />
             <text x="154" y="343" class="sc-txt">-100</text>
 
-            <!-- Скляний задній контур трубки -->
+            <!-- Скляний контур трубки -->
             <path d="M 110,200 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,200" 
                   fill="none" stroke="#555" stroke-width="16" stroke-linecap="round" style="opacity: 0.15;" />
 
-            <!-- ОГРАНИЧИТЕЛЬНЫЕ МАСКИ ДЛЯ КОЛЕН МАНОМЕТРА (Скрывают лишнюю воду снаружи трубок) -->
-            <defs>
-                <clipPath id="left-pipe-clip"><rect x="100" y="195" width="20" height="170" /></clipPath>
-                <clipPath id="right-pipe-clip"><rect x="160" y="195" width="20" height="170" /></clipPath>
-            </defs>
+            <!-- === МЕТОД КІНЕМАТИЧНИХ ЛІНІЙ (НАВЕРНЯКА) === -->
+            <!-- Нижня сполучна дуга (статична) -->
+            <path d="M 110,278 A 30,30 0 0,0 170,278" fill="none" stroke="royalblue" stroke-width="10" />
 
-            <!-- === МОНОЛИТНОЕ ВОДЯНОЕ ТЕЛО (Основа) === -->
-            <!-- Нижня статична дуга манометра, яка нікуди не рухається -->
-            <path d="M 110,270 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,270" 
-                  fill="none" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
+            <!-- Ліве коліно: Анімується строго по вертикалі через CSS transition властивості y2 -->
+            <line x1="110" y1="280" x2="110" y2="{left_knee_y}" stroke="royalblue" stroke-width="10" stroke-linecap="round" class="animated-left" />
 
-            <!-- ЛІВЕ КОЛІНО: Рівень рідини рухається плавно вниз через translateY -->
-            <g clip-path="url(#left-pipe-clip)">
-                <rect x="105" y="150" width="10" height="132" fill="royalblue" class="left-fluid-mask" />
-            </g>
-
-            <!-- ПРАВЕ КОЛІНО: Рівень рідини рухається плавно вгору через translateY -->
-            <g clip-path="url(#right-pipe-clip)">
-                <rect x="165" y="150" width="10" height="132" fill="royalblue" class="right-fluid-mask" />
-            </g>
+            <!-- Праве коліно: Анімується строго по вертикалі через CSS transition властивості y2 -->
+            <line x1="170" y1="280" x2="170" y2="{right_knee_y}" stroke="royalblue" stroke-width="10" stroke-linecap="round" class="animated-right" />
         </g>
               
         <text x="140" y="405" class="lbl-txt" fill="royalblue" text-anchor="middle">Манометр М</text>
