@@ -3,7 +3,7 @@ import random
 def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbulent):
     """
     Абсолютно плавна 60 FPS анімація за класичним методом (як у Стоксі та краплях).
-    Рівні манометра змінюються через нативну CSS-анімацію stroke-dashoffset.
+    Рівні манометра змінюються через нативну CSS-анімацію.
     """
     valve_angle = (valve_pos / 100.0) * 90.0 if flow_mode != 'none' else 0.0
     
@@ -12,8 +12,8 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     
     # Базовий рівень рідини у спокої — Y=280.
     # Розраховуємо фінальні координати Y для лівого та правого коліна
-    left_y_final = 280.0 + delta_px
-    right_y_final = 280.0 - delta_px
+    left_knee_y = 280.0 + delta_px
+    right_knee_y = 280.0 - delta_px
 
     # Клієнтський секундомір (JS)
     js_timer_script = ""
@@ -30,23 +30,14 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         </script>
         """
 
-    # Динамічні CSS стилі для плавної зміни рівнів (так само, як рух шарика)
-    css_animation = f"""
-    @keyframes move_left_knee {{
-        from {{ stroke-dashoffset: {delta_px}; }}
-        to {{ stroke-dashoffset: 0; }}
-    }}
-    @keyframes move_right_knee {{
-        from {{ stroke-dashoffset: {-delta_px}; }}
-        to {{ stroke-dashoffset: 0; }}
-    }}
-    
-    .animated-left {{
+    # Динамічні CSS стилі для плавної зміни рівнів
+    css_animation = """
+    .animated-left {
         transition: y2 8.0s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }}
-    .animated-right {{
+    }
+    .animated-right {
         transition: y2 8.0s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }}
+    }
     """
 
     # Турбулентне тремтіння при нестабільному потоці повітря
@@ -189,14 +180,13 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             <path d="M 110,200 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,200" 
                   fill="none" stroke="#555" stroke-width="16" stroke-linecap="round" style="opacity: 0.15;" />
 
-            <!-- === МЕТОД КІНЕМАТИЧНИХ ЛІНІЙ (НАВЕРНЯКА) === -->
             <!-- Нижня сполучна дуга (статична) -->
             <path d="M 110,278 A 30,30 0 0,0 170,278" fill="none" stroke="royalblue" stroke-width="10" />
 
-            <!-- Ліве коліно: Анімується строго по вертикалі через CSS transition властивості y2 -->
+            <!-- Ліве коліно: Анімується через нативні змінні left_knee_y -->
             <line x1="110" y1="280" x2="110" y2="{left_knee_y}" stroke="royalblue" stroke-width="10" stroke-linecap="round" class="animated-left" />
 
-            <!-- Праве коліно: Анімується строго по вертикалі через CSS transition властивості y2 -->
+            <!-- Праве коліно: Анімується через нативні змінні right_knee_y -->
             <line x1="170" y1="280" x2="170" y2="{right_knee_y}" stroke="royalblue" stroke-width="10" stroke-linecap="round" class="animated-right" />
         </g>
               
