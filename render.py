@@ -3,9 +3,9 @@ import random
 def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbulent):
     """
     Абсолютно плавна анімація 60 FPS. 
-    Підйом манометра переведено на CSS Keyframes через маскування, що дає ідеальну плавність.
+    Манометр плавно витискається з нуля (Y=280) у різні боки за допомогою CSS scaleY.
     """
-    # Завжди передаємо цільове значення, а плавність входу забезпечить маска CSS
+    # Цільові рівні манометра
     left_knee_y = 280 + (target_dH_mm * 0.6)
     right_knee_y = 280 - (target_dH_mm * 0.6)
     
@@ -31,20 +31,20 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     bubbles = ""
     manometer_class = "v-water-static"
 
-    # Елегантна та плавна CSS анімація для манометра (вхід у режим за 8 секунд за допомогою кліп-маски)
+    # Фізична CSS анімація: витискання води з нульової лінії (Y=280) у різні боки
     if flow_mode == 'stream' or flow_mode == 'drops':
         manometer_class = "v-water-animated"
         css_animation += """
-        @keyframes reveal_pressure {
-            from { clip-path: inset(0 0 100% 0); }
-            to { clip-path: inset(0 0 0 0); }
+        @keyframes pressure_push {
+            from { transform: scaleY(0); transform-origin: 140px 280px; }
+            to { transform: scaleY(1); transform-origin: 140px 280px; }
         }
         .v-water-animated {
-            animation: reveal_pressure 8.0s cubic-bezier(0.1, 0.6, 0.2, 1.0) forwards;
+            animation: pressure_push 8.0s cubic-bezier(0.1, 0.5, 0.15, 1.0) forwards;
         }
         """
 
-    # Турбулентне тремтіння (накладається зверху, якщо потік нестабільний)
+    # Турбулентне тремтіння (накладається на всю групу манометра)
     if flow_mode != 'none' and is_turbulent:
         css_animation += """
         @keyframes jitter {
@@ -179,7 +179,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             <path d="M 110,200 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,200" 
                   fill="none" stroke="#555" stroke-width="16" stroke-linecap="round" style="opacity: 0.15;" />
 
-            <!-- Водне тіло тепер має клас для плавної анімації появи через clip-path -->
+            <!-- Анімоване водне тіло через масштаб із фіксованим центром на осі Y=280 -->
             <path d="M 110,{left_knee_y} L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,{right_knee_y}" 
                   fill="none" stroke="royalblue" stroke-width="10" stroke-linecap="round" class="{manometer_class}" />
         </g>
@@ -193,3 +193,4 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     </html>
     """
     return html_src
+
