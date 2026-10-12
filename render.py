@@ -1,122 +1,114 @@
-import layout
+import streamlit as st
+import streamlit.components.v1 as components
+import time
+import physics
+import render
 
-def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbulent):
+def handle_laboratory_stages(valve_pos, target_dH_mm, flow_rate_air, is_turbulent, t_celsius, p_kpa):
     """
-    Модуль збірки інтерфейсу лабораторної роботи. 
-    Уповільнює динаміку манометра, роблячи рух рідини інерційним та затяжним.
+    Керує етапами досліду за допомогою чесної синхронізації часу на сервері.
+    Повністю усуває баг дублювання та посмикування манометра.
     """
-    valve_angle = (valve_pos / 100.0) * 90.0 if flow_mode != 'none' else 0.0
-    delta_px = (target_dH_mm * 0.6) if flow_mode != 'none' else 0.0
-    js_mode = 1 if flow_mode in ['stream', 'drops'] else 0
+    installation_placeholder = st.empty()
+    instruction_placeholder = st.empty()
 
-    # Нативний JS-двигун з уповільненою інерційною швидкістю ходу (коефіцієнт 0.012 замість 0.05)
-    js_engine = f"""
-    <script>
-        let currentShift = 0;
-        const targetShift = {delta_px};
-        const mode = {js_mode};
+    if st.session_state.step == 0:
+        # Крок 0: Спокій
+        st.session_state.current_dH = 0.0
+        html_code = render.get_html_installation(valve_pos, 0.0, 'none', 'vspom', is_turbulent)
+        with installation_placeholder:
+            components.html(html_code, height=430, scrolling=False)
+        instruction_placeholder.info("📌 **Крок 1:** Налаштуйте параметри середовища та відкриття крана B. Натисніть **'Відкрити кран B'**.")
+
+    elif st.session_state.step == 1:
+        # Крок 1: Чесний плавний підйом (Струмінь води) на протязі 6 секунд БЕЗ МЕРЦАННЯ
+        instruction_placeholder.warning("⏳ **Перехідний режим:** Вода тече струменем. Нагнітання тиску в манометрі. Зачекайте стабілізації...")
         
-        function animateManometer() {{
-            if (mode === 1) {{
-                // Робимо підйом значно повільнішим та інерційним, розтягуючи його на всю фазу струменя
-                if (currentShift < targetShift) {{
-                    currentShift += (targetShift - currentShift) * 0.012 + 0.03;
-                    if (currentShift > targetShift) currentShift = targetShift;
-                }}
-            }} else {{
-                // Плавне повернення на нуль при закритті крана
-                if (currentShift > 0) {{
-                    currentShift -= currentShift * 0.05 + 0.1;
-                    if (currentShift < 0) currentShift = 0;
-                }}
-            }}
-            document.getElementById('left-knee').setAttribute('y2', (280 + currentShift).toFixed(1));
-            document.getElementById('right-knee').setAttribute('y2', (280 - currentShift).toFixed(1));
-            requestAnimationFrame(animateManometer);
-        }}
+        total_steps = 30
+        for i in range(1, total_steps + 1):
+            # Асимптотичний розгін водяного стовпа (інерція)
+            progress = 1.0 - (0.05 ** (i / total_steps))
+            st.session_state.current_dH = progress * target_dH_mm
+            
+            html_code = render.get_html_installation(valve_pos, st.session_state.current_dH, 'stream', 'vspom', is_turbulent)
+            with installation_placeholder:
+                components.html(html_code, height=430, scrolling=False)
+            time.sleep(0.18)  # Плавний крок у 180мс
+            
+        st.session_state.step = 2
+        st.rerun()
+
+    elif st.session_state.step == 2:
+        # Крок 2: Стаціонарний режим (Манометр зафіксований на точній висоті current_dH)
+        st.session_state.current_dH = target_dH_mm
+        html_code = render.get_html_installation(valve_pos, st.session_state.current_dH, 'drops', 'vspom', is_turbulent)
+        with installation_placeholder:
+            components.html(html_code, height=430, scrolling=False)
+        instruction_placeholder.success("✅ **Тиск стабілізовано!** Перехідний процес завершено, вода витікає краплинами. Натисніть кнопку **'Підставити робочий стакан'**.")
         
-        if ("{cup_type}" === "work") {{
-            let start = Date.now();
-            setInterval(() => {{
-                let diff = (Date.now() - start) / 1000;
-                document.getElementById('js-timer').textContent = diff.toFixed(1) + ' c';
-            }}, 100);
-        }}
+        if is_turbulent:
+            st.warning("⚠️ **Увага!** Потік повітря став турбулентним. Закон Пуазейля не виконується!")
+
+    elif st.session_state.step == 3:
+        # Крок 3: Робочий замір (Час контролюється без реранів сервера)
+        if "start_time" not in st.session_state:
+            st.session_state.start_time = time.time()
+
+        elapsed = int(time.time() - st.session_state.start_time)
+        st.session_state.measured_time = elapsed
+
+        # Рендеримо картинку зі збереженим стабільним значенням тиску
+        html_code = render.get_html_installation(valve_pos, target_dH_mm, 'drops', 'work', is_turbulent, current_time_sec=elapsed)
+        with installation_placeholder:
+            components.html(html_code, height=430, scrolling=False)
+
+        if elapsed < 60:
+            instruction_placeholder.markdown(f"""
+            🔴 **ТРИВАЄ ВИМІРЮВАННЯ (Секундомір працює автоматично на схемі):**
+            * **Пройшло часу на сервері:** `{elapsed} / 60 c`
+            * *Вказівка:* Чекайте виконання нормативу (не менше 60 секунд). Для оновлення натисніть кнопку 'Оновити таймер' нижче.
+            """)
+            st.button("🔄 Оновити таймер", use_container_width=True)
+        else:
+            instruction_placeholder.markdown(f"""
+            ...
+            🟢 **НОРМАТИВ ЧАСУ ВИКОНАНО!**
+            * **Загальний зафіксований час досліду:** `{elapsed} c`
+            * *Вказівка:* Натисніть кнопку **'3. Прибрати робочий стакан'** на верхній панелі.
+            """)
+            st.button("🔄 Оновити стан установки", use_container_width=True)
+
+    elif st.session_state.step == 4:
+        # Крок 4: Фіксація результатів
+        if "start_time" in st.session_state:
+            st.session_state.measured_time = int(time.time() - st.session_state.start_time)
+            del st.session_state["start_time"]
+
+        html_code = render.get_html_installation(valve_pos, target_dH_mm, 'drops', 'none', is_turbulent)
+        with installation_placeholder:
+            components.html(html_code, height=430, scrolling=False)
         
-        window.onload = () => {{
-            requestAnimationFrame(animateManometer);
-        }};
-    </script>
-    """
+        instruction_placeholder.markdown(f"⏱️ **Час досліду зафіксовано:** `{st.session_state.measured_time} с`. Натисніть кнопку нижче для запису результату.")
+        
+        if st.button("⚖️ 4. Зважити робочий стакан та записати результат", use_container_width=True):
+            res = physics.generate_experiment_result(flow_rate_air, target_dH_mm/1000.0, is_turbulent, t_celsius, p_kpa, st.session_state.measured_time)
+            res = {**{"№ Досліду": len(st.session_state.history) + 1}, **res}
+            st.session_state.history.append(res)
+            st.session_state.step = 5
+            st.rerun()
 
-    css_animation = ""
-    water_flow_element = ""
-    bubbles = ""
+    elif st.session_state.step == 5:
+        # Крок 5: Закриття крана B та плавне скидання тиску
+        instruction_placeholder.info("🔄 Закриття крана B... Скидання тиску та вирівнювання рівнів манометра.")
+        
+        for i in range(15, -1, -1):
+            animated_dH = (i / 15.0) * target_dH_mm
+            html_code = render.get_html_installation(valve_pos, animated_dH, 'none', 'vspom', is_turbulent)
+            with installation_placeholder:
+                components.html(html_code, height=430, scrolling=False)
+            time.sleep(0.06)
+            
+        st.session_state.step = 0
+        st.session_state.measured_time = 0.0
+        st.rerun()
 
-    if flow_mode != 'none' and is_turbulent:
-        css_animation += """
-        @keyframes jitter {
-            0% { transform: translateY(0px); }
-            100% { transform: translateY(1.5px); }
-        }
-        .mano-group { animation: jitter 0.05s infinite alternate ease-in-out; }
-        """
-
-    if flow_mode == 'stream':
-        water_flow_element = '<polygon points="318.5,330 321.5,330 321,395 319,395" fill="#007bff" opacity="0.8"/>'
-    elif flow_mode == 'drops':
-        css_animation += """
-        @keyframes drop_fall {
-            0% { transform: translateY(0px); opacity: 1; }
-            100% { transform: translateY(65px); opacity: 0; }
-        }
-        .fluid-drop { animation: drop_fall 0.3s infinite linear; }
-        """
-        water_flow_element = '<circle cx="320" cy="335" r="3.5" fill="#007bff" class="fluid-drop" />'
-
-    if flow_mode != 'none':
-        css_animation += """
-        @keyframes bubble_up {
-            0% { transform: translateY(0px); opacity: 0; }
-            50% { opacity: 0.8; }
-            100% { transform: translateY(-90px); opacity: 0; }
-        }
-        .b1 { animation: bubble_up 2s infinite linear; }
-        .b2 { animation: bubble_up 1.6s infinite linear 0.4s; }
-        """
-        bubbles = """
-        <circle cx="290" cy="260" r="2" fill="none" stroke="rgba(255,255,255,0.8)" class="b1" />
-        <circle cx="340" cy="270" r="2" fill="none" stroke="rgba(255,255,255,0.8)" class="b2" />
-        """
-
-    timer_display = "block" if cup_type == 'work' else "none"
-    cup_element = ""
-    if cup_type == 'vspom':
-        cup_element = """
-        <path d="M 295,385 L 300,428 Q 320,431 340,428 L 345,385" fill="none" stroke="#6c757d" stroke-width="2.5" />
-        <path d="M 299,412 Q 320,414 341,412 L 342,427 Q 320,430 301,427 Z" fill="rgba(108, 117, 125, 0.35)" />
-        <text x="320" y="405" font-family="sans-serif" font-size="10" fill="#555" text-anchor="middle">Допоміжний</text>
-        """
-    elif cup_type == 'work':
-        css_animation += """
-        @keyframes fill_cup {
-            from { transform: scaleY(0); transform-origin: 320px 427px; }
-            to { transform: scaleY(1); transform-origin: 320px 427px; }
-        }
-        .cup-water-grow { animation: fill_cup 60s linear forwards; }
-        """
-        cup_element = f"""
-        <path d="M 295,385 L 300,428 Q 320,431 340,428 L 345,385" fill="none" stroke="#0056b3" stroke-width="2.5" />
-        <path d="M 298.5,400 Q 320,402 341.5,400 L 342,427 Q 320,430 301,427 Z" fill="rgba(0, 123, 255, 0.5)" class="cup-water-grow" />
-        <text x="320" y="375" font-family="sans-serif" font-size="11" fill="#0056b3" font-weight="bold" text-anchor="middle">РОБОЧИЙ</text>
-        """
-
-    return layout.SVG_TEMPLATE.format(
-        timer_display=timer_display,
-        css_animation=css_animation,
-        valve_angle=valve_angle,
-        bubbles=bubbles,
-        cup_element=cup_element,
-        water_flow_element=water_flow_element,
-        js_engine=js_engine
-    )
