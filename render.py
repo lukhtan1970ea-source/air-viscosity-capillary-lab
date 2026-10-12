@@ -2,17 +2,15 @@ import random
 
 def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbulent):
     """
-    Генерує висококласну схему лабораторної установки з вбудованим автоматичним
-    JavaScript-секундоміром для абсолютно плавної роботи без ривків сторінки.
+    Генерує схему установки. Вода піднята по вертикалі вгору, щоб не витікати під стакан.
     """
-    # Якщо кран закритий, манометр строго на нулі
     real_dH = target_dH_mm if flow_mode != 'none' else 0.0
     left_knee_y = 280 + (real_dH * 0.6)
     right_knee_y = 280 - (real_dH * 0.6)
     
     valve_angle = (valve_pos / 100.0) * 90.0 if flow_mode != 'none' else 0.0
     
-    # Скрипт автоматичного секундоміра на клієнті (JS)
+    # Клієнтський секундомір JS
     js_timer_script = ""
     timer_display = "none"
     if cup_type == 'work':
@@ -27,7 +25,6 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         </script>
         """
 
-    # Налаштування CSS-анімацій для струменя та капель
     css_animation = ""
     water_flow_element = ""
     bubbles = ""
@@ -36,21 +33,20 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         css_animation += """
         @keyframes jitter {
             0% { transform: translateY(0px); }
-            100% { transform: translateY(2px); }
+            100% { transform: translateY(1.8px); }
         }
         .v-water { animation: jitter 0.05s infinite alternate ease-in-out; }
         """
 
     if flow_mode == 'stream':
-        # Красивий динамічний струмінь, що звужується донизу
-        water_flow_element = '<polygon points="318,330 322,330 321,385 319,385" fill="#007bff" opacity="0.8"/>'
+        water_flow_element = '<polygon points="318.5,330 321.5,330 321,395 319,395" fill="#007bff" opacity="0.8"/>'
     elif flow_mode == 'drops':
         css_animation += """
         @keyframes drop_fall {
             0% { transform: translateY(0px); opacity: 1; }
-            100% { transform: translateY(55px); opacity: 0; }
+            100% { transform: translateY(65px); opacity: 0; }
         }
-        .fluid-drop { animation: drop_fall 0.35s infinite linear; }
+        .fluid-drop { animation: drop_fall 0.3s infinite linear; }
         """
         water_flow_element = '<circle cx="320" cy="335" r="3.5" fill="#007bff" class="fluid-drop" />'
 
@@ -61,33 +57,34 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             50% { opacity: 0.8; }
             100% { transform: translateY(-90px); opacity: 0; }
         }
-        .b1 { animation: bubble_up 2.2s infinite linear; }
-        .b2 { animation: bubble_up 1.7s infinite linear 0.5s; }
+        .b1 { animation: bubble_up 2s infinite linear; }
+        .b2 { animation: bubble_up 1.6s infinite linear 0.4s; }
         """
         bubbles = """
         <circle cx="290" cy="260" r="2" fill="none" stroke="rgba(255,255,255,0.8)" class="b1" />
         <circle cx="340" cy="270" r="2" fill="none" stroke="rgba(255,255,255,0.8)" class="b2" />
         """
 
-    # Візуалізація стаканів
+    # Візуалізація стаканів (Виправлено положення води по вертикалі Y)
     cup_element = ""
     if cup_type == 'vspom':
         cup_element = """
-        <path d="M 295,385 L 300,430 Q 320,433 340,430 L 345,385" fill="none" stroke="#6c757d" stroke-width="2.5" />
-        <path d="M 299,412 Q 320,414 341,412 L 343,430 Q 320,433 301,430 Z" fill="rgba(108, 117, 125, 0.35)" />
+        <path d="M 295,385 L 300,428 Q 320,431 340,428 L 345,385" fill="none" stroke="#6c757d" stroke-width="2.5" />
+        <path d="M 299,412 Q 320,414 341,412 L 342,427 Q 320,430 301,427 Z" fill="rgba(108, 117, 125, 0.35)" />
         <text x="320" y="405" font-family="sans-serif" font-size="10" fill="#555" text-anchor="middle">Допоміжний</text>
         """
     elif cup_type == 'work':
+        # Плавне заповнення строго від внутрішнього дна стакана (Y=427)
         css_animation += """
         @keyframes fill_cup {
-            from { transform: scaleY(0); transform-origin: bottom; }
-            to { transform: scaleY(1); transform-origin: bottom; }
+            from { transform: scaleY(0); transform-origin: 320px 427px; }
+            to { transform: scaleY(1); transform-origin: 320px 427px; }
         }
         .cup-water-grow { animation: fill_cup 60s linear forwards; }
         """
         cup_element = f"""
-        <path d="M 295,385 L 300,430 Q 320,433 340,430 L 345,385" fill="none" stroke="#0056b3" stroke-width="2.5" />
-        <path d="M 299,400 Q 320,402 341,400 L 343,430 Q 320,433 301,430 Z" fill="rgba(0, 123, 255, 0.5)" class="cup-water-grow" />
+        <path d="M 295,385 L 300,428 Q 320,431 340,428 L 345,385" fill="none" stroke="#0056b3" stroke-width="2.5" />
+        <path d="M 298.5,400 Q 320,402 341.5,400 L 342,427 Q 320,430 301,427 Z" fill="rgba(0, 123, 255, 0.5)" class="cup-water-grow" />
         <text x="320" y="375" font-family="sans-serif" font-size="11" fill="#0056b3" font-weight="bold" text-anchor="middle">РОБОЧИЙ</text>
         """
 
@@ -131,17 +128,14 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         <text x="320" y="190" class="lbl-txt" fill="#0056b3" text-anchor="middle">Судина А</text>
         {bubbles}
         
-        <!-- 2. БЛОК З КАПІЛЯРОМ К (КОРОБОЧКА) -->
+        <!-- 2. БЛОК З КАПІЛЯРОМ К -->
         <rect x="490" y="90" width="160" height="90" rx="6" fill="#f1f3f5" stroke="#adb5bd" stroke-width="2" />
         <text x="570" y="112" class="lbl-txt" text-anchor="middle">Капіляр К</text>
         <path d="M 500,140 Q 530,120 560,140 T 620,140" fill="none" stroke="#17a2b8" stroke-width="3" stroke-linecap="round" />
 
-        <!-- 3. ГЕРМЕТИЧНІ З'ЄДНУВАЛЬНІ ТРУБКИ ПО СХЕМІ -->
-        <!-- Ліва трубка капіляра: Герметично заходить в кришку судини А -->
+        <!-- 3. ГЕРМЕТИЧНІ ТРУБКИ ПО МЕТОДИЦІ -->
         <path d="M 490,140 L 320,140 L 320,80" fill="none" stroke="#555" stroke-width="2.5" />
-        <!-- Права трубка капіляра: Виходить в атмосферу -->
         <path d="M 650,140 L 690,140 L 690,60" fill="none" stroke="#555" stroke-width="2.5" />
-        <!-- Трубка від судини А до лівого коліна манометра -->
         <path d="M 350,80 L 350,60 L 140,60 L 140,200" fill="none" stroke="#555" stroke-width="2.5" />
 
         <!-- 4. КРАН В ТА СТАКАН -->
