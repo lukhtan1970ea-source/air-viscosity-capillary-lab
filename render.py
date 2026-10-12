@@ -1,34 +1,63 @@
 import random
 
-def get_html_installation(valve_pos, current_dH_mm, flow_mode, cup_type, is_turbulent, current_time_sec=0.0):
+def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbulent, current_time_sec=0.0):
     """
     Генерує схему установки з монолітним красивим манометром.
-    Рівні контролюються виключно через Python, що усуває баг дублирования.
+    Анімація підйому робиться через JS на клієнті, що дає 60 FPS без скачків від сервера.
     """
     valve_angle = (valve_pos / 100.0) * 90.0 if flow_mode != 'none' else 0.0
+    delta_px = (target_dH_mm * 0.6) if flow_mode != 'none' else 0.0
     
-    # Додаємо візуальне турбулентне тремтіння до рівня, якщо потік повітря критичний
-    jitter = random.uniform(-1.5, 1.5) if (flow_mode != 'none' and is_turbulent) else 0.0
-    real_dH = current_dH_mm + jitter
-    
-    # Розрахунок верхніх точок Y для лівого та правого стовпчиків води (Базовий 280)
-    left_y = 280.0 + (real_dH * 0.6)
-    right_y = 280.0 - (real_dH * 0.6)
+    # Режим для JS: 1 - тиск росте/стабільний, 0 - тиску немає (кран закритий)
+    js_mode = 1 if flow_mode in ['stream', 'drops'] else 0
 
-    # Клієнтський секундомір (JS) працює ТІЛЬКИ на кроці заміру часу
-    js_timer_script = ""
-    timer_display = "none"
-    if cup_type == 'work':
-        timer_display = "block"
-        js_timer_script = f"""
-        <script>
+    # Вбудований JS-двигун для плавної інтерполяції дуги манометра
+    js_engine = f"""
+    <script>
+        let currentShift = 0;
+        const targetShift = {delta_px};
+        const mode = {js_mode};
+        
+        // Функція плавної промальовки манометра (60 кадрів/сек)
+        function animateManometer() {{
+            if (mode === 1) {{
+                if (currentShift < targetShift) {{
+                    // Дуже повільний інерційний підйом, розтягнутий на 6-7 секунд
+                    currentShift += (targetShift - currentShift) * 0.015 + 0.02;
+                    if (currentShift > targetShift) currentShift = targetShift;
+                }}
+            }} else {{
+                if (currentShift > 0) {{
+                    currentShift -= currentShift * 0.08 + 0.1;
+                    if (currentShift < 0) currentShift = 0;
+                }}
+            }}
+            
+            // Розраховуємо Y-координати для монолітного контуру
+            let leftY = (280 + currentShift).toFixed(1);
+            let rightY = (280 - currentShift).toFixed(1);
+            
+            // Формуємо новий шлях для цільного водяного тіла манометра
+            let newPath = `M 110,${{leftY}} L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,${{rightY}}`;
+            document.getElementById('v-water-contour').setAttribute('d', newPath);
+            
+            requestAnimationFrame(animateManometer);
+        }}
+        
+        // Робота секундоміра
+        if ("{cup_type}" === "work") {{
             let start = Date.now() - ({current_time_sec} * 1000);
             setInterval(() => {{
                 let diff = (Date.now() - start) / 1000;
                 document.getElementById('js-timer').textContent = diff.toFixed(1) + ' c';
             }}, 100);
-        </script>
-        """
+        }}
+        
+        window.onload = () => {{
+            requestAnimationFrame(animateManometer);
+        }};
+    </script>
+    """
 
     css_animation = ""
     water_flow_element = ""
@@ -66,7 +95,6 @@ def get_html_installation(valve_pos, current_dH_mm, flow_mode, cup_type, is_turb
         <circle cx="340" cy="270" r="2" fill="none" stroke="rgba(255,255,255,0.8)" class="b2" />
         """
 
-    # Візуалізація стаканів (Виправлено положення води, відцентровано під кран)
     cup_element = ""
     if cup_type == 'vspom':
         cup_element = """
@@ -88,7 +116,6 @@ def get_html_installation(valve_pos, current_dH_mm, flow_mode, cup_type, is_turb
         <text x="320" y="375" font-family="sans-serif" font-size="11" fill="#0056b3" font-weight="bold" text-anchor="middle">РОБОЧИЙ</text>
         """
 
-    # Пряма збірка HTML рядка без використання зовнішніх модулів-макетів
     html_src = f"""
     <!DOCTYPE html>
     <html>
@@ -165,8 +192,8 @@ def get_html_installation(valve_pos, current_dH_mm, flow_mode, cup_type, is_turb
             <path d="M 110,200 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,200" 
                   fill="none" stroke="#555" stroke-width="16" stroke-linecap="round" style="opacity: 0.15;" />
 
-            <!-- === МОНОЛІТНЕ ЦІЛЬНЕ ВОДНЕ ТІЛО МАНОМЕТРА === -->
-            <path d="M 110,{left_y} L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,{right_y}" 
+            <!-- === ЦІЛЬНИЙ КОНТУР ВОДИ: ЗМІНЮЄТЬСЯ ДИНАМІЧНО ЧЕРЕЗ JS === -->
+            <path id="v-water-contour" d="M 110,280 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,280" 
                   fill="none" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
         </g>
               
@@ -174,7 +201,7 @@ def get_html_installation(valve_pos, current_dH_mm, flow_mode, cup_type, is_turb
 
     </svg>
     
-    {js_timer_script}
+    {js_engine}
     </body>
     </html>
     """
