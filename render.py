@@ -4,7 +4,7 @@ import layout
 def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbulent, current_time_sec=0.0):
     """
     Збирає лабораторну установку, динамічно підставляючи змінні у шаблон layout.
-    Виправлено баг NameError та інтегровано фізично точні ввігнуті меніски.
+    Виправлено екранування JS-змінних для усунення помилки NameError.
     """
     valve_angle = (valve_pos / 100.0) * 90.0 if flow_mode != 'none' else 0.0
     delta_px = (target_dH_mm * 0.6) if flow_mode != 'none' else 0.0
@@ -13,7 +13,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     js_mode = 1 if flow_mode in ['stream', 'drops'] else 0
     js_initial_shift = 0.0 if flow_mode == 'stream' else delta_px
 
-    # Динамічний JS двигун клієнта (подвійні фігурні дужки захищають змінні JS від Python)
+    # Динамічний JS двигун клієнта (всі внутрішні змінні JS екрановані подвійними дужками)
     js_engine = f"""
     <script>
         let currentShift = {js_initial_shift}; 
@@ -42,16 +42,15 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             let rightY = (280 - safeShift).toFixed(1);
             
             // Повертаємо ідеальну математику монолітного контуру лінії
-            let newManoPath = `M 110,${leftY} L 110,350 Q 110,370 140,370 Q 170,370 170,${rightY}`;
+            let newManoPath = `M 110,${{leftY}} L 110,350 Q 110,370 140,370 Q 170,370 170,${{rightY}}`;
             document.getElementById('v-water-contour').setAttribute('d', newManoPath);
             
             // Білі чашечки-маски провисають ВНИЗ на +4.5 пікселя, зрізаючи круглий краєчок стовпчика води
-            let leftMeniscusPath = `M 105,${leftY} Q 110,${(parseFloat(leftY) + 4.5).toFixed(1)} 115,${leftY} Z`;
+            let leftMeniscusPath = `M 105,${{leftY}} Q 110,${{(parseFloat(leftY) + 4.5).toFixed(1)}} 115,${{leftY}} Z`;
             document.getElementById('left-meniscus').setAttribute('d', leftMeniscusPath);
             
-            let rightMeniscusPath = `M 165,${rightY} Q 170,${(parseFloat(rightY) + 4.5).toFixed(1)} 175,${rightY} Z`;
+            let rightMeniscusPath = `M 165,${{rightY}} Q 170,${{(parseFloat(rightY) + 4.5).toFixed(1)}} 175,${{rightY}} Z`;
             document.getElementById('right-meniscus').setAttribute('d', rightMeniscusPath);
-
             
             // 2. АНІМАЦІЯ ОПУСКАННЯ ВОДИ В СУДИНІ А
             if (flowMode !== 'none') {{
