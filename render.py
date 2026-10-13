@@ -27,7 +27,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             if (mode === 1) {{
                 if (currentShift < targetShift) {{
                     // Трохи прискорили коефіцієнт (з 0.015 до 0.025), щоб манометр і струмінь за вказані 6 секунд сходилися ідеально
-                    currentShift += (targetShift - currentShift) * 0.025 + 0.03;
+                    currentShift += (targetShift - currentShift) * 0.005 + 0.03;
                     if (currentShift > targetShift) currentShift = targetShift;
                 }}
             }} else {{
