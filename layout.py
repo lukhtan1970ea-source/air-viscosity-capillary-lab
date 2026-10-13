@@ -44,9 +44,15 @@ BASE_TEMPLATE = """
     BUBBLES_VAR
     
     <!-- 2. БЛОК З КАПІЛЯРОМ К -->
-    <rect x="490" y="90" width="160" height="90" rx="6" fill="#f1f3f5" stroke="#adb5bd" stroke-width="2" />
-    <text x="570" y="112" class="lbl-txt" text-anchor="middle">Капіляр К</text>
-    <path d="M 500,140 Q 530,120 560,140 T 620,140" fill="none" stroke="#17a2b8" stroke-width="3" stroke-linecap="round" />
+    <!-- Скручений у круту спіраль довгий капіляр (2.14 метра) -->
+    <path d="M 490,140 
+             L 510,140 Q 515,140 515,130 L 515,115 Q 515,105 525,105 
+             L 535,105 Q 545,105 545,115 L 545,155 Q 545,165 555,165 
+             L 565,165 Q 575,165 575,155 L 575,115 Q 575,105 585,105 
+             L 595,105 Q 605,105 605,115 L 605,155 Q 605,165 615,165 
+             L 625,165 Q 635,165 635,155 L 635,140 L 650,140" 
+          fill="none" stroke="#17a2b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+
 
     <!-- 3. ГЕРМЕТИЧНІ ТРУБКИ ПО МЕТОДИЦІ -->
     <path d="M 490,140 L 320,140 L 320,80" fill="none" stroke="#555" stroke-width="2.5" />
