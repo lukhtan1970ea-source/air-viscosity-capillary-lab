@@ -87,8 +87,14 @@ BASE_TEMPLATE = """
               fill="none" stroke="#555" stroke-width="16" stroke-linecap="round" style="opacity: 0.15;" />
 
         <!-- === МОНОЛІТНЕ ЦІЛЬНЕ ВОДНЕ ТІЛО МАНОМЕТРА === -->
-        <path id="v-water-contour" d="M 110,INIT_LEFT_Y_VAR L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,INIT_RIGHT_Y_VAR" 
-              fill="none" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
+        <!-- Плоска внутрішня заливка трубки, щоб прибрати опуклість купола -->
+        <path id="v-water-contour" d="M 110,INIT_LEFT_Y_VAR L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,INIT_RIGHT_Y_VAR L 165,INIT_RIGHT_Y_VAR L 165,350 Q 165,365 140,365 Q 115,365 115,350 L 115,INIT_LEFT_Y_VAR Z" 
+              fill="royalblue" />
+
+        <!-- Нові фізично коректні ввігнуті меніски води (краями догори) -->
+        <path id="left-meniscus" d="M 105,INIT_LEFT_Y_VAR Q 110,INIT_LEFT_Y_VAR 115,INIT_LEFT_Y_VAR" fill="none" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
+        <path id="right-meniscus" d="M 165,INIT_RIGHT_Y_VAR Q 170,INIT_RIGHT_Y_VAR 175,INIT_RIGHT_Y_VAR" fill="none" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
+
     </g>
           
     <text x="140" y="405" class="lbl-txt" fill="royalblue" text-anchor="middle">Манометр М</text>
