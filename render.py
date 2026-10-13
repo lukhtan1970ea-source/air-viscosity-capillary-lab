@@ -4,22 +4,21 @@ import layout
 def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbulent, current_time_sec=0.0):
     """
     Збирає лабораторну установку, підставляючи змінні у стабільний шаблон.
-    Додано захист (Math.min) від виходу рідини за межі трубок манометра на великих значеннях.
+    Виправлено поведінку води в Судині А (дно зафіксоване) та додано реалістичний біжучий струмінь.
     """
     valve_angle = (valve_pos / 100.0) * 90.0 if flow_mode != 'none' else 0.0
     
     # Перекладаємо мм у пікселі (1 мм = 0.6 пікселя)
     raw_delta_px = (target_dH_mm * 0.6) if flow_mode != 'none' else 0.0
     
-    # ЖОРСТКИЙ ЛІМІТАТОР: манометр на схемі закінчується на висоті 75 пікселів (відмітка 120 мм).
-    # Обмежуємо максимальний зсув, щоб рідина фізично не могла вилізти з трубки.
+    # ЖОРСТКИЙ ЛІМІТАТОР для манометра
     delta_px = min(raw_delta_px, 72.0)
     
     timer_display = "block" if cup_type == 'work' else "none"
     js_mode = 1 if flow_mode in ['stream', 'drops'] else 0
     js_initial_shift = 0.0 if flow_mode == 'stream' else delta_px
 
-    # Нативний клієнтський скрипт із захистом від кракозябр (Math.min)
+    # Нативний клієнтський скрипт із захистом манометра
     js_engine = f"""
     <script>
         let currentShift = {js_initial_shift}; 
@@ -39,7 +38,6 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
                 }}
             }}
             
-            // Додатковий ультра-захист у браузері: обмежуємо зсув на рівні 72 пікселів
             let safeShift = Math.min(currentShift, 72.0);
             
             let leftY = (280 + safeShift).toFixed(1);
@@ -69,8 +67,37 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     water_flow_element = ""
     bubbles = ""
 
+    # Розрахунок опускання верхнього рівня води в Судині А (але дно лишається на 298.5!)
+    # Передаємо початкову координату Y для бака в CSS
+    vessel_water_top_y = 150.0 + min(current_time_sec * 0.25, 35.0) if flow_mode != 'none' else 150.0
+
     if flow_mode == 'stream':
-        water_flow_element = '<polygon points="318.5,330 321.5,330 321,395 319,395" fill="#007bff" opacity="0.8"/>'
+        # Створюємо ефект біжучої води за допомогою градієнта та анімованого пунктиру CSS
+        css_animation += """
+        @keyframes flow_speed {
+            from { stroke-dashoffset: 0; }
+            to { stroke-dashoffset: -20; }
+        }
+        .water-stream-core {
+            stroke-dasharray: 8, 4;
+            animation: flow_speed 0.25s infinite linear;
+        }
+        """
+        # Струмінь з лінійним градієнтом і біжучим пунктиром всередині
+        water_flow_element = """
+        <defs>
+            <linearGradient id="streamGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#0056b3" />
+                <stop offset="30%" stop-color="#3b99ff" />
+                <stop offset="70%" stop-color="#b3d7ff" />
+                <stop offset="100%" stop-color="#0056b3" />
+            </linearGradient>
+        </defs>
+        <!-- Основне тіло струменя з градієнтом -->
+        <line x1="320" y1="330" x2="320" y2="395" stroke="url(#streamGrad)" stroke-width="4" stroke-linecap="round" />
+        <!-- Біжучі білі фрагменти для ілюстрації швидкості та блиску потоку -->
+        <line x1="320" y1="330" x2="320" y2="395" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.6" class="water-stream-core" />
+        """
     elif flow_mode == 'drops':
         css_animation += """
         @keyframes drop_fall {
@@ -83,11 +110,6 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
 
     if flow_mode != 'none':
         css_animation += """
-        @keyframes fill_vessel {
-            0% { transform: translateY(0px); }
-            100% { transform: translateY(15px); }
-        }
-        .vessel-water { animation: fill_vessel 60s linear forwards; }
         @keyframes bubble_up {
             0% { transform: translateY(0px); opacity: 0; }
             50% { opacity: 0.8; }
@@ -96,9 +118,18 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         .b1 { animation: bubble_up 2s infinite linear; }
         .b2 { animation: bubble_up 1.6s infinite linear 0.4s; }
         """
-        bubbles = """
+        bubbles = f"""
         <circle cx="290" cy="260" r="2" fill="none" stroke="rgba(255,255,255,0.8)" class="b1" />
         <circle cx="340" cy="270" r="2" fill="none" stroke="rgba(255,255,255,0.8)" class="b2" />
+        """
+
+    if flow_mode != 'none' and is_turbulent:
+        css_animation += """
+        @keyframes jitter {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(1.5px); }
+        }
+        .mano-group { animation: jitter 0.05s infinite alternate ease-in-out; }
         """
 
     cup_element = ""
@@ -122,16 +153,15 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         <text x="320" y="375" font-family="sans-serif" font-size="11" fill="#0056b3" font-weight="bold" text-anchor="middle">РОБОЧИЙ</text>
         """
 
-    # Фіксуємо початковий безпечний кадр для запобігання мікро-стрибкам
-    safe_initial_shift = min(js_initial_shift, 72.0)
-    init_left_y = 280.0 + safe_initial_shift
-    init_right_y = 280.0 - safe_initial_shift
+    init_left_y = 280.0 + js_initial_shift
+    init_right_y = 280.0 - js_initial_shift
 
     return layout.BASE_TEMPLATE.format(
         timer_display=timer_display,
         css_animation=css_animation,
         init_left_y=init_left_y,
         init_right_y=init_right_y,
+        vessel_water_top_y=vessel_water_top_y,  # Передаємо динамічний верх води у шаблон
         valve_angle=valve_angle,
         bubbles=bubbles,
         cup_element=cup_element,
