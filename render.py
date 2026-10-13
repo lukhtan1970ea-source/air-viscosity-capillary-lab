@@ -41,23 +41,17 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             let leftY = (280 + safeShift).toFixed(1);
             let rightY = (280 - safeShift).toFixed(1);
             
-            // 1. Рухаємо сині закруглені стовпчики рідини (збільшуємо запас по висоті)
-            document.getElementById('left-knee').setAttribute('y1', (parseFloat(leftY) + 80).toFixed(1));
-            document.getElementById('left-knee').setAttribute('y2', (parseFloat(leftY) - 10).toFixed(1));
+            // 1. Рухаємо сині стовпчики рідини (зміна верхньої координати y2)
+            document.getElementById('left-knee').setAttribute('y2', leftY);
+            document.getElementById('right-knee').setAttribute('y2', rightY);
             
-            document.getElementById('right-knee').setAttribute('y1', (parseFloat(rightY) + 80).toFixed(1));
-            document.getElementById('right-knee').setAttribute('y2', (parseFloat(rightY) - 10).toFixed(1));
+            // 2. Синхронно зміщуємо накладні маски менісків кольору фону
+            let leftMeniscusPath = `M 105,${leftY} Q 110,${(parseFloat(leftY) + 3.5).toFixed(1)} 115,${leftY}`;
+            document.getElementById('left-meniscus').setAttribute('d', leftMeniscusPath);
             
-            // 2. Синхронно зміщуємо обрізаючі маски ввігнутих менісків від самого верху (Y=150)
-            let leftClip = `M 105,150 L 115,150 L 115,${{leftY}} Q 110,${{(parseFloat(leftY) + 3.5).toFixed(1)}} 105,${{leftY}} Z`;
-            document.getElementById('left-clip-path').setAttribute('d', leftClip);
-            
-            let rightClip = `M 165,150 L 175,150 L 175,${{rightY}} Q 170,${{(parseFloat(rightY) + 3.5).toFixed(1)}} 165,${{rightY}} Z`;
-            document.getElementById('right-clip-path').setAttribute('d', rightClip);
-
-
-
-            
+            let rightMeniscusPath = `M 165,${rightY} Q 170,${(parseFloat(rightY) + 3.5).toFixed(1)} 175,${rightY}`;
+            document.getElementById('right-meniscus').setAttribute('d', rightMeniscusPath);
+          
             // 2. АНІМАЦІЯ ОПУСКАННЯ ВОДИ В СУДИНІ А
             if (flowMode !== 'none') {{
                 let elapsedSec = (Date.now() - startTime) / 1000;
