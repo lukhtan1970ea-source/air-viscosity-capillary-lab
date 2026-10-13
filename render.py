@@ -91,7 +91,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         # Убрали капризный <defs> и покрасили струну в чистый глубокий синий цвет #0056b3
         water_flow_element = """
         <!-- Тіло струменя: насичений синій колір, який відобразиться без помилок XML -->
-        <line x1="320" y1="330" x2="320" y2="395" stroke="#4169e1" stroke-width="5.0" stroke-linecap="round" />
+        <line x1="320" y1="330" x2="320" y2="395" stroke="#007bff" stroke-width="5.0" stroke-linecap="round" />
         <!-- Бліки швидкості: біжуча тонка напівпрозора нитка -->
         <line x1="320" y1="330" x2="320" y2="395" stroke="#ffffff" stroke-width="1.6" stroke-opacity="0.75" class="water-stream-core" stroke-linecap="round" />
         """
