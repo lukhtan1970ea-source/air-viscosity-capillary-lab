@@ -1,7 +1,7 @@
 # layout.py
 # Статичний контур сцени лабораторної установки. Повністю ізольований від f-рядків Python.
 
-HTML_TEMPLATE = """
+BASE_TEMPLATE = """
 <!DOCTYPE html>
 <html>
 <head>
@@ -11,7 +11,6 @@ HTML_TEMPLATE = """
         .main-title { font-family: sans-serif; font-size: 15px; fill: #111; font-weight: bold; text-anchor: middle; }
         .sc-txt { font-family: monospace; font-size: 9px; fill: #555; }
         .timer-box {
-            display: TIMER_DISPLAY_VAR;
             position: absolute;
             top: 75px;
             right: 40px;
@@ -28,8 +27,7 @@ HTML_TEMPLATE = """
 </head>
 <body>
 
-
-<div class="timer-box">&#9201; Секундомір: <span id="js-timer">0.0 с</span></div>
+<div class="timer-box" style="display: TIMER_DISPLAY_VAR;">&#9201; Секундомір: <span id="js-timer">0.0 с</span></div>
 
 <svg width="760" height="420" viewBox="0 0 800 440" xmlns="http://w3.org" style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 8px;">
     
@@ -82,7 +80,7 @@ HTML_TEMPLATE = """
               fill="none" stroke="#555" stroke-width="16" stroke-linecap="round" style="opacity: 0.15;" />
 
         <!-- === МОНОЛІТНЕ ЦІЛЬНЕ ВОДНЕ ТІЛО МАНОМЕТРА === -->
-        <path id="v-water-contour" d="M 110,280 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,280" 
+        <path id="v-water-contour" d="M 110,INIT_LEFT_Y_VAR L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,INIT_RIGHT_Y_VAR" 
               fill="none" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
     </g>
           
