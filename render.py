@@ -49,11 +49,12 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             document.getElementById('right-knee').setAttribute('y2', (parseFloat(rightY) - 10).toFixed(1));
             
             // 2. Синхронно зміщуємо обрізаючі маски ввігнутих менісків від самого верху (Y=150)
-            let leftClip = `M 105,150 L 115,150 L 115,${leftY} Q 110,${(parseFloat(leftY) + 3.5).toFixed(1)} 105,${leftY} Z`;
+            let leftClip = `M 105,150 L 115,150 L 115,${{leftY}} Q 110,${{(parseFloat(leftY) + 3.5).toFixed(1)}} 105,${{leftY}} Z`;
             document.getElementById('left-clip-path').setAttribute('d', leftClip);
             
-            let rightClip = `M 165,150 L 175,150 L 175,${rightY} Q 170,${(parseFloat(rightY) + 3.5).toFixed(1)} 165,${rightY} Z`;
+            let rightClip = `M 165,150 L 175,150 L 175,${{rightY}} Q 170,${{(parseFloat(rightY) + 3.5).toFixed(1)}} 165,${{rightY}} Z`;
             document.getElementById('right-clip-path').setAttribute('d', rightClip);
+
 
 
             
