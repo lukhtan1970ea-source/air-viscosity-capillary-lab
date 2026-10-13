@@ -4,15 +4,22 @@ import layout
 def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbulent, current_time_sec=0.0):
     """
     Збирає лабораторну установку, підставляючи змінні у стабільний шаблон.
+    Додано захист (Math.min) від виходу рідини за межі трубок манометра на великих значеннях.
     """
     valve_angle = (valve_pos / 100.0) * 90.0 if flow_mode != 'none' else 0.0
-    delta_px = (target_dH_mm * 0.6) if flow_mode != 'none' else 0.0
+    
+    # Перекладаємо мм у пікселі (1 мм = 0.6 пікселя)
+    raw_delta_px = (target_dH_mm * 0.6) if flow_mode != 'none' else 0.0
+    
+    # ЖОРСТКИЙ ЛІМІТАТОР: манометр на схемі закінчується на висоті 75 пікселів (відмітка 120 мм).
+    # Обмежуємо максимальний зсув, щоб рідина фізично не могла вилізти з трубки.
+    delta_px = min(raw_delta_px, 72.0)
     
     timer_display = "block" if cup_type == 'work' else "none"
     js_mode = 1 if flow_mode in ['stream', 'drops'] else 0
     js_initial_shift = 0.0 if flow_mode == 'stream' else delta_px
 
-    # Нативний клієнтський скрипт
+    # Нативний клієнтський скрипт із захистом від кракозябр (Math.min)
     js_engine = f"""
     <script>
         let currentShift = {js_initial_shift}; 
@@ -32,8 +39,11 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
                 }}
             }}
             
-            let leftY = (280 + currentShift).toFixed(1);
-            let rightY = (280 - currentShift).toFixed(1);
+            // Додатковий ультра-захист у браузері: обмежуємо зсув на рівні 72 пікселів
+            let safeShift = Math.min(currentShift, 72.0);
+            
+            let leftY = (280 + safeShift).toFixed(1);
+            let rightY = (280 - safeShift).toFixed(1);
             
             let newPath = `M 110,${{leftY}} L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,${{rightY}}`;
             document.getElementById('v-water-contour').setAttribute('d', newPath);
@@ -112,8 +122,10 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         <text x="320" y="375" font-family="sans-serif" font-size="11" fill="#0056b3" font-weight="bold" text-anchor="middle">РОБОЧИЙ</text>
         """
 
-    init_left_y = 280.0 + js_initial_shift
-    init_right_y = 280.0 - js_initial_shift
+    # Фіксуємо початковий безпечний кадр для запобігання мікро-стрибкам
+    safe_initial_shift = min(js_initial_shift, 72.0)
+    init_left_y = 280.0 + safe_initial_shift
+    init_right_y = 280.0 - safe_initial_shift
 
     return layout.BASE_TEMPLATE.format(
         timer_display=timer_display,
