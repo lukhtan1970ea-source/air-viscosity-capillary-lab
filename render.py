@@ -12,7 +12,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     js_mode = 1 if flow_mode in ['stream', 'drops'] else 0
     js_initial_shift = 0.0 if flow_mode == 'stream' else delta_px
 
-    # Динамічний JS двигун клієнта
+    # --- 1. КЛІЄНТСЬКИЙ JS ДВИГУН ---
     js_engine = f"""
     <script>
         let currentShift = {js_initial_shift}; 
@@ -23,7 +23,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         let flowMode = "{flow_mode}";
 
         function animateSetup() {{
-            // 1. АНІМАЦІЯ МАНОМЕТРА
+            // Анімація манометра
             if (mode === 1) {{
                 if (currentShift < targetShift) {{
                     currentShift += (targetShift - currentShift) * 0.015 + 0.02;
@@ -43,7 +43,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             let newManoPath = `M 110,${{leftY}} L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,${{rightY}}`;
             document.getElementById('v-water-contour').setAttribute('d', newManoPath);
             
-            // 2. АНІМАЦІЯ ОПУСКАННЯ ВОДИ В СУДИНІ А (Дно фіксоване на 298.5)
+            // Анімація опускання води в Судині А
             if (flowMode !== 'none') {{
                 let elapsedSec = (Date.now() - startTime) / 1000;
                 if (flowMode === 'stream') elapsedSec = 4.0;
@@ -71,11 +71,13 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     </script>
     """
 
+    # --- 2. СТИЛІ АНІМАЦІЇ ПОТОКУ ---
     css_animation = ""
     water_flow_element = ""
     bubbles = ""
 
     if flow_mode == 'stream':
+        # Струмінь води: біжучий пунктир CSS
         css_animation += """
         @keyframes flow_speed {
             from { stroke-dashoffset: 0; }
@@ -86,16 +88,17 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             animation: flow_speed 0.15s infinite linear;
         }
         """
+        # Важливо: Ідентифікатор градієнта 'blueFluidGrad' тепер суворо збігається в url()
         water_flow_element = """
         <defs>
-            <linearGradient id="streamGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient id="blueFluidGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stop-color="#004494" />
                 <stop offset="40%" stop-color="#3b99ff" />
                 <stop offset="70%" stop-color="#80bfff" />
                 <stop offset="100%" stop-color="#004494" />
             </linearGradient>
         </defs>
-        <line x1="320" y1="330" x2="320" y2="395" stroke="url(#streamGrad)" stroke-width="5.5" stroke-linecap="round" />
+        <line x1="320" y1="330" x2="320" y2="395" stroke="url(#blueFluidGrad)" stroke-width="5.5" stroke-linecap="round" />
         <line x1="320" y1="330" x2="320" y2="395" stroke="#ffffff" stroke-width="1.8" stroke-opacity="0.7" class="water-stream-core" stroke-linecap="round" />
         """
     elif flow_mode == 'drops':
@@ -108,6 +111,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         """
         water_flow_element = '<circle cx="320" cy="335" r="3.5" fill="#007bff" class="fluid-drop" />'
 
+    # --- 3. АНІМАЦІЯ БУЛЬБАШОК ТА ТРЕМТІННЯ ---
     if flow_mode != 'none':
         css_animation += """
         @keyframes bubble_up {
@@ -132,6 +136,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         .mano-group { animation: jitter 0.05s infinite alternate ease-in-out; }
         """
 
+    # --- 4. ВІЗУАЛІЗАЦІЯ СТАКАНІВ ---
     cup_element = ""
     if cup_type == 'vspom':
         cup_element = """
@@ -153,10 +158,10 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         <text x="320" y="375" font-family="sans-serif" font-size="11" fill="#0056b3" font-weight="bold" text-anchor="middle">РОБОЧИЙ</text>
         """
 
+    # --- 5. ЗБІРКА ФАЙЛУ З ШАБЛОНУ ---
     init_left_y = 280.0 + js_initial_shift
     init_right_y = 280.0 - js_initial_shift
 
-    # Крок за кроком заміняємо токени без використання f-рядків
     src = layout.BASE_TEMPLATE
     src = src.replace("TIMER_DISPLAY_VAR", str(timer_display))
     src = src.replace("CSS_ANIMATION_VAR", str(css_animation))
