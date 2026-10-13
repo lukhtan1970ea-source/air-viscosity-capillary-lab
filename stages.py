@@ -7,35 +7,36 @@ import render
 def handle_laboratory_stages(valve_pos, target_dH_mm, flow_rate_air, is_turbulent, t_celsius, p_kpa):
     """
     Керує етапами досліду за допомогою нативної JS анімації на клієнті.
-    Гарантує 100% плавність без стрибків від сервера.
+    Усі виклики рендерингу синхронізовані з повною дельтою манометра.
     """
     installation_placeholder = st.empty()
     instruction_placeholder = st.empty()
 
+    # Передаємо половину повної дельти для графічного зсуву одного коліна (0.5 * target)
+    visual_dH = target_dH_mm * 0.5
+
     if st.session_state.step == 0:
         # Крок 0: Готовність
-        html_code = render.get_html_installation(valve_pos, 0.0, 'none', 'vspom', is_turbulent)
+        html_code = render.get_html_installation(valve_pos, visual_dH, 'none', 'vspom', is_turbulent)
         with installation_placeholder:
             components.html(html_code, height=430, scrolling=False)
         instruction_placeholder.info("📌 **Крок 1:** Налаштуйте параметри середовища та відкриття крана B. Натисніть **'Відкрити кран B'**.")
 
     elif st.session_state.step == 1:
-        # Крок 1: Перехідний режим. Віддаємо манометр у JS, він виросте ІДЕАЛЬНО плавно під струмінь
-        # Передаємо умовні 4 секунди протікання для красивого початкового нахилу рівня води
-        html_code = render.get_html_installation(valve_pos, target_dH_mm, 'stream', 'vspom', is_turbulent, current_time_sec=4.0)
+        # Крок 1: Перехідний режим
+        html_code = render.get_html_installation(valve_pos, visual_dH, 'stream', 'vspom', is_turbulent)
         with installation_placeholder:
             components.html(html_code, height=430, scrolling=False)
             
         instruction_placeholder.warning("⏳ **Перехідний режим:** Вода тече струменем. Нагнітання тиску в манометрі. Зачекайте стабілізації системи (~6 секунд)...")
         
-        # Спимо один раз на сервері, поки браузер плавно показує процес
         time.sleep(6.0)
         st.session_state.step = 2
         st.rerun()
 
     elif st.session_state.step == 2:
-        # Крок 2: Стаціонарний режим (Перехід на краплі, манометр тримає фіксовану висоту)
-        html_code = render.get_html_installation(valve_pos, target_dH_mm, 'drops', 'vspom', is_turbulent, current_time_sec=6.0)
+        # Крок 2: Стаціонарний режим
+        html_code = render.get_html_installation(valve_pos, visual_dH, 'drops', 'vspom', is_turbulent)
         with installation_placeholder:
             components.html(html_code, height=430, scrolling=False)
         instruction_placeholder.success("✅ **Тиск стабілізовано!** Вода витікає краплинами. Натисніть кнопку **'Підставити робочий стакан'**.")
@@ -51,7 +52,7 @@ def handle_laboratory_stages(valve_pos, target_dH_mm, flow_rate_air, is_turbulen
         elapsed = int(time.time() - st.session_state.start_time)
         st.session_state.measured_time = elapsed
 
-        html_code = render.get_html_installation(valve_pos, target_dH_mm, 'drops', 'work', is_turbulent, current_time_sec=elapsed)
+        html_code = render.get_html_installation(valve_pos, visual_dH, 'drops', 'work', is_turbulent, current_time_sec=elapsed)
         with installation_placeholder:
             components.html(html_code, height=430, scrolling=False)
 
@@ -64,7 +65,6 @@ def handle_laboratory_stages(valve_pos, target_dH_mm, flow_rate_air, is_turbulen
             st.button("🔄 Оновити таймер", use_container_width=True)
         else:
             instruction_placeholder.markdown(f"""
-            ...
             🟢 **НОРМАТИВ ЧАСУ ВИКОНАНО!**
             * **Загальний зафіксований час досліду:** `{elapsed} c`
             * *Вказівка:* Натисніть кнопку **'3. Прибрати робочий стакан'** на верхній панелі.
@@ -77,7 +77,7 @@ def handle_laboratory_stages(valve_pos, target_dH_mm, flow_rate_air, is_turbulen
             st.session_state.measured_time = int(time.time() - st.session_state.start_time)
             del st.session_state["start_time"]
 
-        html_code = render.get_html_installation(valve_pos, target_dH_mm, 'drops', 'vspom', is_turbulent)
+        html_code = render.get_html_installation(valve_pos, visual_dH, 'drops', 'vspom', is_turbulent)
         with installation_placeholder:
             components.html(html_code, height=430, scrolling=False)
         
@@ -91,13 +91,13 @@ def handle_laboratory_stages(valve_pos, target_dH_mm, flow_rate_air, is_turbulen
             st.rerun()
 
     elif st.session_state.step == 5:
-        # Крок 5: Закриття крана B та плавне скидання тиску через JS
+        # Крок 5: Закриття крана B та плавне скидання тиску
         instruction_placeholder.info("🔄 Закриття крана B... Скидання тиску та вирівнювання рівнів манометра.")
         html_code = render.get_html_installation(valve_pos, 0.0, 'none', 'vspom', is_turbulent)
         with installation_placeholder:
             components.html(html_code, height=430, scrolling=False)
         
-        time.sleep(2.0) # Даємо JS плавно повернути воду в нуль
+        time.sleep(2.0)
         st.session_state.step = 0
         st.session_state.measured_time = 0.0
         st.rerun()
