@@ -154,7 +154,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         <text x="320" y="375" font-family="sans-serif" font-size="11" fill="#0056b3" font-weight="bold" text-anchor="middle">РОБОЧИЙ</text>
         """
 
-    src = layout.HTML_TEMPLATE
+    src = layout.BASE_TEMPLATE
     src = src.replace("TIMER_DISPLAY_VAR", str(timer_display))
     src = src.replace("CSS_ANIMATION_VAR", str(css_animation))
     src = src.replace("INIT_LEFT_Y_VAR", str(280.0 + js_initial_shift))
