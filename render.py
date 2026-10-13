@@ -12,7 +12,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     js_mode = 1 if flow_mode in ['stream', 'drops'] else 0
     js_initial_shift = 0.0 if flow_mode == 'stream' else delta_px
 
-    # --- 1. КЛІЄНТСЬКИЙ JS ДВИГУН ---
+    # Нативний JS двигун клієнта з покращеним часом відгуку
     js_engine = f"""
     <script>
         let currentShift = {js_initial_shift}; 
@@ -23,10 +23,11 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         let flowMode = "{flow_mode}";
 
         function animateSetup() {{
-            // Анімація манометра
+            // 1. АНІМАЦІЯ МАНОМЕТРА (Синхронізована, плавна)
             if (mode === 1) {{
                 if (currentShift < targetShift) {{
-                    currentShift += (targetShift - currentShift) * 0.015 + 0.02;
+                    // Трохи прискорили коефіцієнт (з 0.015 до 0.025), щоб манометр і струмінь за вказані 6 секунд сходилися ідеально
+                    currentShift += (targetShift - currentShift) * 0.025 + 0.03;
                     if (currentShift > targetShift) currentShift = targetShift;
                 }}
             }} else {{
@@ -43,7 +44,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             let newManoPath = `M 110,${{leftY}} L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,${{rightY}}`;
             document.getElementById('v-water-contour').setAttribute('d', newManoPath);
             
-            // Анімація опускання води в Судині А
+            // 2. АНІМАЦІЯ ОПУСКАННЯ ВОДИ В СУДИНІ А
             if (flowMode !== 'none') {{
                 let elapsedSec = (Date.now() - startTime) / 1000;
                 if (flowMode === 'stream') elapsedSec = 4.0;
@@ -71,13 +72,11 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     </script>
     """
 
-    # --- 2. СТИЛІ АНІМАЦІЇ ПОТОКУ ---
     css_animation = ""
     water_flow_element = ""
     bubbles = ""
 
     if flow_mode == 'stream':
-        # Струмінь води: біжучий пунктир CSS поверх стабільного синього кольору
         css_animation += """
         @keyframes flow_speed {
             from { stroke-dashoffset: 0; }
@@ -88,14 +87,11 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             animation: flow_speed 0.15s infinite linear;
         }
         """
-        # Убрали капризный <defs> и покрасили струну в чистый глубокий синий цвет #0056b3
+        # Пофарбували у гарний світло-водяний колір #4da6ff
         water_flow_element = """
-        <!-- Тіло струменя: насичений синій колір, який відобразиться без помилок XML -->
-        <line x1="320" y1="330" x2="320" y2="395" stroke="#007bff" stroke-width="5.0" stroke-linecap="round" />
-        <!-- Бліки швидкості: біжуча тонка напівпрозора нитка -->
+        <line x1="320" y1="330" x2="320" y2="395" stroke="#4da6ff" stroke-width="5.0" stroke-linecap="round" />
         <line x1="320" y1="330" x2="320" y2="395" stroke="#ffffff" stroke-width="1.6" stroke-opacity="0.75" class="water-stream-core" stroke-linecap="round" />
         """
-
     elif flow_mode == 'drops':
         css_animation += """
         @keyframes drop_fall {
@@ -104,9 +100,9 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         }
         .fluid-drop { animation: drop_fall 0.3s infinite linear; }
         """
-        water_flow_element = '<circle cx="320" cy="335" r="3.5" fill="#007bff" class="fluid-drop" />'
+        # Краплі тепер теж у ніжному світлому відтінку #4da6ff
+        water_flow_element = '<circle cx="320" cy="335" r="3.5" fill="#4da6ff" class="fluid-drop" />'
 
-    # --- 3. АНІМАЦІЯ БУЛЬБАШОК ТА ТРЕМТІННЯ ---
     if flow_mode != 'none':
         css_animation += """
         @keyframes bubble_up {
@@ -131,8 +127,8 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         .mano-group { animation: jitter 0.05s infinite alternate ease-in-out; }
         """
 
-    # --- 4. ВІЗУАЛІЗАЦІЯ СТАКАНІВ ---
     cup_element = ""
+    # ПРАВИЛО: Допоміжний стакан стоїть і на стаціонарному режимі, і коли прибрали робочий!
     if cup_type == 'vspom':
         cup_element = """
         <path d="M 300,385 L 303,425 Q 320,428 337,425 L 340,385" fill="none" stroke="#6c757d" stroke-width="2.5" />
@@ -147,13 +143,13 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         }
         .cup-water-grow { animation: fill_cup 60s linear forwards; }
         """
+        # Робочий стакан тепер теж наповнюється ніжно-синьою водою
         cup_element = f"""
         <path d="M 300,385 L 303,425 Q 320,428 337,425 L 340,385" fill="none" stroke="#0056b3" stroke-width="2.5" />
-        <path d="M 301.5,400 Q 320,402 338.5,400 L 339.5,424 Q 320,427 302.5,424 Z" fill="rgba(0, 123, 255, 0.5)" class="cup-water-grow" />
+        <path d="M 301.5,400 Q 320,402 338.5,400 L 339.5,424 Q 320,427 302.5,424 Z" fill="rgba(77, 166, 255, 0.65)" class="cup-water-grow" />
         <text x="320" y="375" font-family="sans-serif" font-size="11" fill="#0056b3" font-weight="bold" text-anchor="middle">РОБОЧИЙ</text>
         """
 
-    # --- 5. ЗБІРКА ФАЙЛУ З ШАБЛОНУ ---
     init_left_y = 280.0 + js_initial_shift
     init_right_y = 280.0 - js_initial_shift
 
