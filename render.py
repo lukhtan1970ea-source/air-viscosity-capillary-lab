@@ -48,9 +48,8 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             let lY_bottom = (lY + 3.5).toFixed(1);
             let rY_bottom = (rY + 3.5).toFixed(1);
             
-                        // Геометрично послідовна траєкторія монолітного контуру — без самоперетинань і скосів
+            // Геометрично послідовна траєкторія монолітного контуру — без самоперетинань і скосів
             let newManoPath = `M 105,${{leftY}} Q 110,${{lY_bottom}} 115,${{leftY}} L 115,350 Q 115,365 140,365 Q 165,365 165,350 L 165,${{rightY}} Q 170,${{rY_bottom}} 175,${{rightY}} L 175,350 Q 175,375 140,375 Q 105,375 105,350 Z`;
-
             document.getElementById('v-water-contour').setAttribute('d', newManoPath);
 
 
