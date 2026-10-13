@@ -91,9 +91,9 @@ BASE_TEMPLATE = """
             <!-- Нижня сполучна дуга (статична) -->
             <path d="M 110,278 A 30,30 0 0,0 170,278" fill="none" stroke="royalblue" stroke-width="10" />
 
-            <!-- Ліве та праве коліно манометра (класичні надійні лінії) -->
-            <line id="left-knee" x1="110" y1="280" x2="110" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
-            <line id="right-knee" x1="170" y1="280" x2="170" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
+            <!-- Ліве та праве коліно манометра (Тепер мають довжину від дна Y=350 до нуля Y=280) -->
+            <line id="left-knee" x1="110" y1="350" x2="110" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="butt" />
+            <line id="right-knee" x1="170" y1="350" x2="170" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
 
             <!-- Накладні маски-трафарети кольору фону (#f8f9fa), що створюють фізичний ефект увігнутості -->
             <path id="left-meniscus" d="M 105,280 Q 110,283.5 115,280" fill="none" stroke="#f8f9fa" stroke-width="3.5" stroke-linecap="round" />
