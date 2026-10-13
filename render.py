@@ -41,20 +41,18 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             let leftY = (280 + safeShift).toFixed(1);
             let rightY = (280 - safeShift).toFixed(1);
             
-            // Розрахунок координат для ввігнутих країв (ширина лівого коліна 105-115, правого 165-175)
+                        // Розрахунок координат для ввігнутих країв (ширина лівого коліна 105-115, правого 165-175)
             let lY = parseFloat(leftY);
             let rY = parseFloat(rightY);
             
             let lY_bottom = (lY + 3.5).toFixed(1);
             let rY_bottom = (rY + 3.5).toFixed(1);
             
-            // Формуємо єдиний монолітний шлях для всього манометра разом із менісками
-            let newManoPath = `M 105,${{leftY}} Q 110,${{lY_bottom}} 115,${{leftY}} L 115,350 Q 115,365 140,365 Q 165,365 165,${{rightY}} Q 170,${{rY_bottom}} 175,${{rightY}} L 175,350 Q 175,375 140,375 Q 105,375 105,350 Z`;
+            // Виправлена траєкторія монолітного контуру: точки з'єднані геометрично послідовно
+            let newManoPath = `M 105,${{leftY}} Q 110,${{lY_bottom}} 115,${{leftY}} L 115,350 Q 115,365 140,365 Q 165,365 165,350 L 165,${{rightY}} Q 170,${{rY_bottom}} 175,${{rightY}} L 175,350 Q 175,375 140,375 Q 105,375 105,350 Z`;
             
             document.getElementById('v-water-contour').setAttribute('d', newManoPath);
-
-
-          
+         
             // 2. АНІМАЦІЯ ОПУСКАННЯ ВОДИ В СУДИНІ А
             if (flowMode !== 'none') {{
                 let elapsedSec = (Date.now() - startTime) / 1000;
