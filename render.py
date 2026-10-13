@@ -76,27 +76,30 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     bubbles = ""
 
     if flow_mode == 'stream':
+        # Створюємо ефект живої води за допомогою біжучого пунктиру та градієнта
         css_animation += """
         @keyframes flow_speed {
             from { stroke-dashoffset: 0; }
-            to { stroke-dashoffset: -24; }
+            to { stroke-dashoffset: -30; }
         }
         .water-stream-core {
-            stroke-dasharray: 10, 5;
-            animation: flow_speed 0.2s infinite linear;
+            stroke-dasharray: 6, 12; /* Робимо білі фрагменти короткими, а проміжки великими */
+            animation: flow_speed 0.15s infinite linear;
         }
         """
         water_flow_element = """
         <defs>
             <linearGradient id="streamGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#0056b3" />
-                <stop offset="30%" stop-color="#3b99ff" />
-                <stop offset="70%" stop-color="#b3d7ff" />
-                <stop offset="100%" stop-color="#0056b3" />
+                <stop offset="0%" stop-color="#004494" />
+                <stop offset="40%" stop-color="#3b99ff" />
+                <stop offset="70%" stop-color="#80bfff" />
+                <stop offset="100%" stop-color="#004494" />
             </linearGradient>
         </defs>
-        <line x1="320" y1="330" x2="320" y2="395" stroke="url(#streamGrad)" stroke-width="4.5" stroke-linecap="round" />
-        <line x1="320" y1="330" x2="320" y2="395" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.65" class="water-stream-core" />
+        <!-- Тіло струменя: робимо його ширшим (5.5 пікселів) -->
+        <line x1="320" y1="330" x2="320" y2="395" stroke="url(#streamGrad)" stroke-width="5.5" stroke-linecap="round" />
+        <!-- Бліки швидкості: робимо їх тонкими та напівпрозорими -->
+        <line x1="320" y1="330" x2="320" y2="395" stroke="#ffffff" stroke-width="1.8" stroke-opacity="0.7" class="water-stream-core" stroke-linecap="round" />
         """
     elif flow_mode == 'drops':
         css_animation += """
