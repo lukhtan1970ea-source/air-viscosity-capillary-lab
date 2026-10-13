@@ -75,11 +75,12 @@ BASE_TEMPLATE = """
     <!-- 5. U-ПОДІБНИЙ МАНОМЕТР М -->
     <!-- Векторне електронне табло манометра (вбудоване прямо в схему) -->
     <g id="mano-digital-panel">
-        <rect x="30" y="70" width="190" height="35" rx="4" fill="#333" stroke="royalblue" stroke-width="1.5" />
-        <text x="42" y="92" font-family="monospace" font-size="14" fill="#66b0ff">💧 ΔH: <tspan id="mano-digital-val" font-weight="bold" fill="#fff">0</tspan> мм</text>
+        <rect x="25" y="70" width="135" height="32" rx="4" fill="#333" stroke="royalblue" stroke-width="1.5" />
+        <text x="35" y="91" font-family="monospace" font-size="13" font-weight="bold" fill="#66b0ff">💧 ΔH: <tspan id="mano-digital-val" fill="#fff">0</tspan> мм</text>
     </g>
 
     <g class="mano-group">
+
 
         <rect x="115" y="180" width="50" height="200" fill="#fff" stroke="#ced4da" />
         <line x1="140" y1="200" x2="140" y2="360" stroke="#aaa" stroke-width="1" />
