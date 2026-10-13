@@ -86,35 +86,32 @@ BASE_TEMPLATE = """
         <path d="M 110,200 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,200" 
               fill="none" stroke="#555" stroke-width="16" stroke-linecap="round" style="opacity: 0.15;" />
 
-        <!-- === МОНОЛІТНЕ ЦІЛЬНЕ ВОДНЕ ТІЛО МАНОМЕТРА === -->
-        <!-- Ограничительные маски в форме вогнутых стаканчиков для левого и правого колена -->
+                <!-- === МОНОЛІТНЕ ЦІЛЬНЕ ВОДНЕ ТІЛО МАНОМЕТРА === -->
         <defs>
-            <!-- Левое колено (ширина от 105 до 115). Верхняя линия дуги провисает вниз -->
+            <!-- Левое колено (ширина от 105 до 115). Маска расширена вверх до Y=150 -->
             <clipPath id="left-meniscus-clip">
-                <path id="left-clip-path" d="M 105,0 L 115,0 L 115,280 Q 110,283.5 105,280 Z" />
+                <path id="left-clip-path" d="M 105,150 L 115,150 L 115,280 Q 110,283.5 105,280 Z" />
             </clipPath>
-            <!-- Правое колено (ширина от 165 до 175). Верхняя линия дуги провисает вниз -->
+            <!-- Правое колено (ширина от 165 до 175). Маска расширена вверх до Y=150 -->
             <clipPath id="right-meniscus-clip">
-                <path id="right-clip-path" d="M 165,0 L 175,0 L 175,280 Q 170,283.5 165,280 Z" />
+                <path id="right-clip-path" d="M 165,150 L 175,150 L 175,280 Q 170,283.5 165,280 Z" />
             </clipPath>
         </defs>
 
-        <!-- Синее тело манометра, разделенное по маскам обрезки -->
         <g class="mano-fluid-group">
-            <!-- Нижняя статичная дуга (всегда на месте) -->
+            <!-- Нижній місток (статичний) -->
             <path d="M 110,278 A 30,30 0 0,0 170,278" fill="none" stroke="royalblue" stroke-width="10" />
 
-            <!-- Левый столбик, обрезаемый вогнутой маской -->
+            <!-- Ліве динамічне коліно (анімується) -->
             <g clip-path="url(#left-meniscus-clip)">
-                <line id="left-knee" x1="110" y1="280" x2="110" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
+                <line id="left-knee" x1="110" y1="360" x2="110" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
             </g>
 
-            <!-- Правый столбик, обрезаемый вогнутой маской -->
+            <!-- Праве динамічне коліно (анімується) -->
             <g clip-path="url(#right-meniscus-clip)">
-                <line id="right-knee" x1="170" y1="280" x2="170" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
+                <line id="right-knee" x1="170" y1="360" x2="170" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
             </g>
         </g>
-
 
     </g>
           
