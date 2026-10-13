@@ -77,7 +77,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     bubbles = ""
 
     if flow_mode == 'stream':
-        # Струмінь води: біжучий пунктир CSS
+        # Струмінь води: біжучий пунктир CSS поверх стабільного синього кольору
         css_animation += """
         @keyframes flow_speed {
             from { stroke-dashoffset: 0; }
@@ -88,19 +88,14 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             animation: flow_speed 0.15s infinite linear;
         }
         """
-        # Важливо: Ідентифікатор градієнта 'blueFluidGrad' тепер суворо збігається в url()
+        # Убрали капризный <defs> и покрасили струну в чистый глубокий синий цвет #0056b3
         water_flow_element = """
-        <defs>
-            <linearGradient id="blueFluidGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#004494" />
-                <stop offset="40%" stop-color="#3b99ff" />
-                <stop offset="70%" stop-color="#80bfff" />
-                <stop offset="100%" stop-color="#004494" />
-            </linearGradient>
-        </defs>
-        <line x1="320" y1="330" x2="320" y2="395" stroke="url(#blueFluidGrad)" stroke-width="5.5" stroke-linecap="round" />
-        <line x1="320" y1="330" x2="320" y2="395" stroke="#ffffff" stroke-width="1.8" stroke-opacity="0.7" class="water-stream-core" stroke-linecap="round" />
+        <!-- Тіло струменя: насичений синій колір, який відобразиться без помилок XML -->
+        <line x1="320" y1="330" x2="320" y2="395" stroke="#0056b3" stroke-width="5.0" stroke-linecap="round" />
+        <!-- Бліки швидкості: біжуча тонка напівпрозора нитка -->
+        <line x1="320" y1="330" x2="320" y2="395" stroke="#ffffff" stroke-width="1.6" stroke-opacity="0.75" class="water-stream-core" stroke-linecap="round" />
         """
+
     elif flow_mode == 'drops':
         css_animation += """
         @keyframes drop_fall {
