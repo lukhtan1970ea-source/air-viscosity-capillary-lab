@@ -35,7 +35,7 @@ def handle_laboratory_stages(valve_pos, target_dH_mm, flow_rate_air, is_turbulen
 
     elif st.session_state.step == 2:
         # Крок 2: Стаціонарний режим (Перехід на краплі, манометр тримає фіксовану висоту)
-        html_code = render.get_html_installation(valve_pos, target_dH_mm, 'drops', 'vspom', is_turbulent)
+        html_code = render.get_html_installation(valve_pos, target_dH_mm, 'drops', 'vspom', is_turbulent, current_time_sec=6.0)
         with installation_placeholder:
             components.html(html_code, height=430, scrolling=False)
         instruction_placeholder.success("✅ **Тиск стабілізовано!** Вода витікає краплинами. Натисніть кнопку **'Підставити робочий стакан'**.")
