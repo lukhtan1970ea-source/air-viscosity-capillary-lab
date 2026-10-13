@@ -87,17 +87,10 @@ BASE_TEMPLATE = """
               fill="none" stroke="#555" stroke-width="16" stroke-linecap="round" style="opacity: 0.15;" />
 
         <!-- === МОНОЛІТНЕ ЦІЛЬНЕ ВОДНЕ ТІЛО МАНОМЕТРА === -->
-        <g class="mano-fluid-group">
-            <!-- Нижня сполучна дуга (статична) -->
-            <path d="M 110,278 A 30,30 0 0,0 170,278" fill="none" stroke="royalblue" stroke-width="10" />
-
-            <!-- Ліве та праве коліно манометра (Тепер мають довжину від дна Y=350 до нуля Y=280) -->
-            <line id="left-knee" x1="110" y1="350" x2="110" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="butt" />
-            <line id="right-knee" x1="170" y1="350" x2="170" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
-
-            <!-- Накладні маски-трафарети кольору фону (#f8f9fa), що створюють фізичний ефект увігнутості -->
-            <path id="left-meniscus" d="M 105,280 Q 110,283.5 115,280" fill="none" stroke="#f8f9fa" stroke-width="3.5" stroke-linecap="round" />
-            <path id="right-meniscus" d="M 165,280 Q 170,283.5 175,280" fill="none" stroke="#f8f9fa" stroke-width="3.5" stroke-linecap="round" />
+        <g class="mano-group">
+            <!-- Вода малюється одним цільним контуром із вбудованими увігнутими менісками -->
+            <path id="v-water-contour" d="M 105,280 Q 110,283.5 115,280 L 115,350 Q 115,365 140,365 Q 165,365 165,350 L 165,280 Q 170,283.5 175,280 L 175,350 Q 175,375 140,375 Q 105,375 105,350 Z" 
+                  fill="royalblue" />
         </g>
 
     </g>
