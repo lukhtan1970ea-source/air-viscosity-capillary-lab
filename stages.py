@@ -21,7 +21,8 @@ def handle_laboratory_stages(valve_pos, target_dH_mm, flow_rate_air, is_turbulen
 
     elif st.session_state.step == 1:
         # Крок 1: Перехідний режим. Віддаємо манометр у JS, він виросте ІДЕАЛЬНО плавно під струмінь
-        html_code = render.get_html_installation(valve_pos, target_dH_mm, 'stream', 'vspom', is_turbulent)
+        # Передаємо умовні 4 секунди протікання для красивого початкового нахилу рівня води
+        html_code = render.get_html_installation(valve_pos, target_dH_mm, 'stream', 'vspom', is_turbulent, current_time_sec=4.0)
         with installation_placeholder:
             components.html(html_code, height=430, scrolling=False)
             
