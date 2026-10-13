@@ -41,16 +41,17 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             let leftY = (280 + safeShift).toFixed(1);
             let rightY = (280 - safeShift).toFixed(1);
             
-            // 1. Рухаємо сині стовпчики рідини (зміна верхньої координати y2)
+            // 1. Рухаємо сині стовпчики повітряно-водяного балансу
             document.getElementById('left-knee').setAttribute('y2', leftY);
             document.getElementById('right-knee').setAttribute('y2', rightY);
             
             // 2. Синхронно зміщуємо накладні маски менісків кольору фону
-            let leftMeniscusPath = `M 105,${leftY} Q 110,${(parseFloat(leftY) + 3.5).toFixed(1)} 115,${leftY}`;
+            let leftMeniscusPath = `M 105,${{leftY}} Q 110,${{(parseFloat(leftY) + 3.5).toFixed(1)}} 115,${{leftY}}`;
             document.getElementById('left-meniscus').setAttribute('d', leftMeniscusPath);
             
-            let rightMeniscusPath = `M 165,${rightY} Q 170,${(parseFloat(rightY) + 3.5).toFixed(1)} 175,${rightY}`;
+            let rightMeniscusPath = `M 165,${{rightY}} Q 170,${{(parseFloat(rightY) + 3.5).toFixed(1)}} 175,${{rightY}}`;
             document.getElementById('right-meniscus').setAttribute('d', rightMeniscusPath);
+
           
             // 2. АНІМАЦІЯ ОПУСКАННЯ ВОДИ В СУДИНІ А
             if (flowMode !== 'none') {{
