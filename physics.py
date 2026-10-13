@@ -24,7 +24,7 @@ def calculate_flow_and_reynolds(valve_pos, t_celsius, p_kpa):
     P_pascal = p_kpa * 1000.0
     
     # Залежність перепаду тиску від відкриття крана (біля 50% висота біля 84 мм)
-    delta_H_nominal = (valve_pos / 50.0) * 0.084 
+    delta_H_nominal = (valve_pos / 50.0) * 0.084 * 2.0
     delta_P = rho_w * g * delta_H_nominal
     
     # Об'ємна швидкість протікання повітря через капіляр за законом Пуазейля
