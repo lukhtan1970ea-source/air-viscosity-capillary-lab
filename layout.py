@@ -73,7 +73,13 @@ BASE_TEMPLATE = """
     WATER_FLOW_ELEMENT_VAR
 
     <!-- 5. U-ПОДІБНИЙ МАНОМЕТР М -->
+    <!-- Електронне табло поточних показань манометра в реальному часі -->
+    <div class="timer-box" style="display: block; top: 75px; right: auto; left: 40px; border-color: royalblue; color: #66b0ff; font-size: 16px;">
+        &#128167; Різниця рівнів &Delta;H: <span id="mano-digital-val" style="font-weight: bold; color: #fff;">0</span> мм
+    </div>
+
     <g class="mano-group">
+
         <rect x="115" y="180" width="50" height="200" fill="#fff" stroke="#ced4da" />
         <line x1="140" y1="200" x2="140" y2="360" stroke="#aaa" stroke-width="1" />
         <line x1="130" y1="280" x2="150" y2="280" stroke="#333" stroke-width="1.5" />
