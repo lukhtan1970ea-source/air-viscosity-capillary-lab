@@ -41,18 +41,17 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             let leftY = (280 + safeShift).toFixed(1);
             let rightY = (280 - safeShift).toFixed(1);
             
-            // Формуємо плоске водяне тіло (без закруглень на кінцях)
-            let newManoPath = `M 110,${{leftY}} L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,${{rightY}} L 165,${{rightY}} L 165,350 Q 165,365 140,365 Q 115,365 115,350 L 115,${{leftY}} Z`;
+            // Розрахунок геометрії плоского тіла води (ширина коліна від 105 до 115 і від 165 до 175)
+            let newManoPath = `M 105,${leftY} L 105,350 Q 105,375 140,375 Q 175,375 175,${rightY} L 165,${rightY} L 165,350 Q 165,365 140,365 Q 115,365 115,350 L 115,${leftY} Z`;
             document.getElementById('v-water-contour').setAttribute('d', newManoPath);
             
-            // Малюємо ввігнуті меніски (дуги, краї яких загнуті ВГОРУ)
-            // Ліве коліно
-            let leftMeniscusPath = `M 105,${{leftY}} Q 110,${{parseFloat(leftY) + 3}} 115,${{leftY}}`;
+            // Ефект ввігнутого меніску: центральна точка дуги (Q) зміщується ВНИЗ на +3.5 пікселя
+            let leftMeniscusPath = `M 105,${leftY} Q 110,${(parseFloat(leftY) + 3.5).toFixed(1)} 115,${leftY}`;
             document.getElementById('left-meniscus').setAttribute('d', leftMeniscusPath);
             
-            // Праве коліно
-            let rightMeniscusPath = `M 165,${{rightY}} Q 170,${{parseFloat(rightY) + 3}} 175,${{rightY}}`;
+            let rightMeniscusPath = `M 165,${rightY} Q 170,${(parseFloat(rightY) + 3.5).toFixed(1)} 175,${rightY}`;
             document.getElementById('right-meniscus').setAttribute('d', rightMeniscusPath);
+
             
             // 2. АНІМАЦІЯ ОПУСКАННЯ ВОДІ В СУДИНІ А
             if (flowMode !== 'none') {{
