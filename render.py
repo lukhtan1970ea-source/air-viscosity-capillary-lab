@@ -76,14 +76,13 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     bubbles = ""
 
     if flow_mode == 'stream':
-        # Створюємо ефект живої води за допомогою біжучого пунктиру та градієнта
         css_animation += """
         @keyframes flow_speed {
             from { stroke-dashoffset: 0; }
             to { stroke-dashoffset: -30; }
         }
         .water-stream-core {
-            stroke-dasharray: 6, 12; /* Робимо білі фрагменти короткими, а проміжки великими */
+            stroke-dasharray: 6, 12;
             animation: flow_speed 0.15s infinite linear;
         }
         """
@@ -96,9 +95,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
                 <stop offset="100%" stop-color="#004494" />
             </linearGradient>
         </defs>
-        <!-- Тіло струменя: робимо його ширшим (5.5 пікселів) -->
         <line x1="320" y1="330" x2="320" y2="395" stroke="url(#streamGrad)" stroke-width="5.5" stroke-linecap="round" />
-        <!-- Бліки швидкості: робимо їх тонкими та напівпрозорими -->
         <line x1="320" y1="330" x2="320" y2="395" stroke="#ffffff" stroke-width="1.8" stroke-opacity="0.7" class="water-stream-core" stroke-linecap="round" />
         """
     elif flow_mode == 'drops':
@@ -156,10 +153,15 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         <text x="320" y="375" font-family="sans-serif" font-size="11" fill="#0056b3" font-weight="bold" text-anchor="middle">РОБОЧИЙ</text>
         """
 
-    # Безпечна покрокова заміна токенів без конфліктів форматування рядків
-    src = layout.HTML_TEMPLATE
+    init_left_y = 280.0 + js_initial_shift
+    init_right_y = 280.0 - js_initial_shift
+
+    # Крок за кроком заміняємо токени без використання f-рядків
+    src = layout.BASE_TEMPLATE
     src = src.replace("TIMER_DISPLAY_VAR", str(timer_display))
     src = src.replace("CSS_ANIMATION_VAR", str(css_animation))
+    src = src.replace("INIT_LEFT_Y_VAR", str(init_left_y))
+    src = src.replace("INIT_RIGHT_Y_VAR", str(init_right_y))
     src = src.replace("VALVE_ANGLE_VAR", str(round(valve_angle, 1)))
     src = src.replace("BUBBLES_VAR", str(bubbles))
     src = src.replace("CUP_ELEMENT_VAR", str(cup_element))
