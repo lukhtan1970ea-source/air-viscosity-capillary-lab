@@ -38,7 +38,8 @@ BASE_TEMPLATE = """
     <!-- 1. СУДИНА А -->
     <rect x="250" y="80" width="140" height="220" rx="10" fill="none" stroke="#555" stroke-width="3" />
     <rect x="290" y="70" width="60" height="10" fill="#333" rx="2" />
-    <path d="M 251.5,150 Q 320,152 388.5,150 L 388.5,298.5 L 251.5,298.5 Z" fill="rgba(0, 123, 255, 0.23)" class="vessel-water" />
+    <path d="M 251.5,{vessel_water_top_y} Q 320,{{ {vessel_water_top_y} + 2 }} 388.5,{vessel_water_top_y} L 388.5,298.5 L 251.5,298.5 Z" fill="rgba(0, 123, 255, 0.23)" />
+
     <text x="320" y="190" class="lbl-txt" fill="#0056b3" text-anchor="middle">Судина А</text>
     {bubbles}
     
