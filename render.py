@@ -3,8 +3,8 @@ import layout
 
 def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbulent, current_time_sec=0.0):
     """
-    Збирає лабораторну установку. 
-    Виправлено меніск водяного манометра на фізично коректний (ввігнутий).
+    Збирає лабораторну установку, динамічно підставляючи змінні у шаблон layout.
+    Виправлено баг NameError та інтегровано фізично точні ввігнуті меніски.
     """
     valve_angle = (valve_pos / 100.0) * 90.0 if flow_mode != 'none' else 0.0
     delta_px = (target_dH_mm * 0.6) if flow_mode != 'none' else 0.0
@@ -13,7 +13,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     js_mode = 1 if flow_mode in ['stream', 'drops'] else 0
     js_initial_shift = 0.0 if flow_mode == 'stream' else delta_px
 
-    # Нативний JS двигун із промальовуванням фізичних ввігнутих менісків води
+    # Динамічний JS двигун клієнта (подвійні фігурні дужки захищають змінні JS від Python)
     js_engine = f"""
     <script>
         let currentShift = {js_initial_shift}; 
@@ -41,19 +41,18 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             let leftY = (280 + safeShift).toFixed(1);
             let rightY = (280 - safeShift).toFixed(1);
             
-            // Розрахунок геометрії плоского тіла води (ширина коліна від 105 до 115 і від 165 до 175)
-            let newManoPath = `M 105,${leftY} L 105,350 Q 105,375 140,375 Q 175,375 175,${rightY} L 165,${rightY} L 165,350 Q 165,365 140,365 Q 115,365 115,350 L 115,${leftY} Z`;
+            // Формуємо плоске водяне тіло (ширина лівого коліна 105-115, правого 165-175)
+            let newManoPath = `M 105,${{leftY}} L 105,350 Q 105,375 140,375 Q 175,375 175,${{rightY}} L 165,${{rightY}} L 165,350 Q 165,365 140,365 Q 115,365 115,350 L 115,${{leftY}} Z`;
             document.getElementById('v-water-contour').setAttribute('d', newManoPath);
             
-            // Ефект ввігнутого меніску: центральна точка дуги (Q) зміщується ВНИЗ на +3.5 пікселя
-            let leftMeniscusPath = `M 105,${leftY} Q 110,${(parseFloat(leftY) + 3.5).toFixed(1)} 115,${leftY}`;
+            // Ефект ввігнутого меніску: центральна точка дуги (Q) провисає вниз на +3.5 пікселя
+            let leftMeniscusPath = `M 105,${{leftY}} Q 110,${{(parseFloat(leftY) + 3.5).toFixed(1)}} 115,${{leftY}}`;
             document.getElementById('left-meniscus').setAttribute('d', leftMeniscusPath);
             
-            let rightMeniscusPath = `M 165,${rightY} Q 170,${(parseFloat(rightY) + 3.5).toFixed(1)} 175,${rightY}`;
+            let rightMeniscusPath = `M 165,${{rightY}} Q 170,${{(parseFloat(rightY) + 3.5).toFixed(1)}} 175,${{rightY}}`;
             document.getElementById('right-meniscus').setAttribute('d', rightMeniscusPath);
-
             
-            // 2. АНІМАЦІЯ ОПУСКАННЯ ВОДІ В СУДИНІ А
+            // 2. АНІМАЦІЯ ОПУСКАННЯ ВОДИ В СУДИНІ А
             if (flowMode !== 'none') {{
                 let elapsedSec = (Date.now() - startTime) / 1000;
                 if (flowMode === 'stream') elapsedSec = 4.0;
@@ -155,14 +154,11 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         <text x="320" y="375" font-family="sans-serif" font-size="11" fill="#0056b3" font-weight="bold" text-anchor="middle">РОБОЧИЙ</text>
         """
 
-    init_left_y = 280.0 + js_initial_shift
-    init_right_y = 280.0 - js_initial_shift
-
-    src = layout.BASE_TEMPLATE
+    src = layout.HTML_TEMPLATE
     src = src.replace("TIMER_DISPLAY_VAR", str(timer_display))
     src = src.replace("CSS_ANIMATION_VAR", str(css_animation))
-    src = src.replace("INIT_LEFT_Y_VAR", str(init_left_y))
-    src = src.replace("INIT_RIGHT_Y_VAR", str(init_right_y))
+    src = src.replace("INIT_LEFT_Y_VAR", str(280.0 + js_initial_shift))
+    src = src.replace("INIT_RIGHT_Y_VAR", str(280.0 - js_initial_shift))
     src = src.replace("VALVE_ANGLE_VAR", str(round(valve_angle, 1)))
     src = src.replace("BUBBLES_VAR", str(bubbles))
     src = src.replace("CUP_ELEMENT_VAR", str(cup_element))
