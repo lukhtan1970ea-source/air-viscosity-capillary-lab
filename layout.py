@@ -86,31 +86,18 @@ BASE_TEMPLATE = """
         <path d="M 110,200 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,200" 
               fill="none" stroke="#555" stroke-width="16" stroke-linecap="round" style="opacity: 0.15;" />
 
-                <!-- === МОНОЛІТНЕ ЦІЛЬНЕ ВОДНЕ ТІЛО МАНОМЕТРА === -->
-        <defs>
-            <!-- Левое колено (ширина от 105 до 115). Маска расширена вверх до Y=150 -->
-            <clipPath id="left-meniscus-clip">
-                <path id="left-clip-path" d="M 105,150 L 115,150 L 115,280 Q 110,283.5 105,280 Z" />
-            </clipPath>
-            <!-- Правое колено (ширина от 165 до 175). Маска расширена вверх до Y=150 -->
-            <clipPath id="right-meniscus-clip">
-                <path id="right-clip-path" d="M 165,150 L 175,150 L 175,280 Q 170,283.5 165,280 Z" />
-            </clipPath>
-        </defs>
-
+        <!-- === МОНОЛІТНЕ ЦІЛЬНЕ ВОДНЕ ТІЛО МАНОМЕТРА === -->
         <g class="mano-fluid-group">
-            <!-- Нижній місток (статичний) -->
+            <!-- Нижня сполучна дуга (статична) -->
             <path d="M 110,278 A 30,30 0 0,0 170,278" fill="none" stroke="royalblue" stroke-width="10" />
 
-            <!-- Ліве динамічне коліно (анімується) -->
-            <g clip-path="url(#left-meniscus-clip)">
-                <line id="left-knee" x1="110" y1="360" x2="110" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
-            </g>
+            <!-- Ліве та праве коліно манометра (класичні надійні лінії) -->
+            <line id="left-knee" x1="110" y1="280" x2="110" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
+            <line id="right-knee" x1="170" y1="280" x2="170" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
 
-            <!-- Праве динамічне коліно (анімується) -->
-            <g clip-path="url(#right-meniscus-clip)">
-                <line id="right-knee" x1="170" y1="360" x2="170" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
-            </g>
+            <!-- Накладні маски-трафарети кольору фону (#f8f9fa), що створюють фізичний ефект увігнутості -->
+            <path id="left-meniscus" d="M 105,280 Q 110,283.5 115,280" fill="none" stroke="#f8f9fa" stroke-width="3.5" stroke-linecap="round" />
+            <path id="right-meniscus" d="M 165,280 Q 170,283.5 175,280" fill="none" stroke="#f8f9fa" stroke-width="3.5" stroke-linecap="round" />
         </g>
 
     </g>
