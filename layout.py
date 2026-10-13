@@ -1,17 +1,17 @@
 # layout.py
-# Статичний HTML/SVG шаблон лабораторної установки для ізоляції від логіки Python
+# Статичний контур сцени лабораторної установки. Повністю ізольований від f-рядків Python.
 
-BASE_TEMPLATE = """
+HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html>
 <head>
     <style>
-        body {{ margin: 0; padding: 0; background-color: #f8f9fa; overflow: hidden; display: flex; flex-direction: column; align-items: center; }}
-        .lbl-txt {{ font-family: sans-serif; font-size: 13px; fill: #333; font-weight: bold; }}
-        .main-title {{ font-family: sans-serif; font-size: 15px; fill: #111; font-weight: bold; text-anchor: middle; }}
-        .sc-txt {{ font-family: monospace; font-size: 9px; fill: #555; }}
-        .timer-box {{
-            display: {timer_display};
+        body { margin: 0; padding: 0; background-color: #f8f9fa; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+        .lbl-txt { font-family: sans-serif; font-size: 13px; fill: #333; font-weight: bold; }
+        .main-title { font-family: sans-serif; font-size: 15px; fill: #111; font-weight: bold; text-anchor: middle; }
+        .sc-txt { font-family: monospace; font-size: 9px; fill: #555; }
+        .timer-box {
+            display: TIMER_DISPLAY_VAR;
             position: absolute;
             top: 75px;
             right: 40px;
@@ -22,14 +22,14 @@ BASE_TEMPLATE = """
             font-size: 18px;
             border-radius: 4px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }}
-        {css_animation}
+        }
+        CSS_ANIMATION_VAR
     </style>
 </head>
 <body>
 
 
-<div class="timer-box">⏱️ Секундомір: <span id="js-timer">0.0 с</span></div>
+<div class="timer-box">&#9201; Секундомір: <span id="js-timer">0.0 с</span></div>
 
 <svg width="760" height="420" viewBox="0 0 800 440" xmlns="http://w3.org" style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 8px;">
     
@@ -38,10 +38,12 @@ BASE_TEMPLATE = """
     <!-- 1. СУДИНА А -->
     <rect x="250" y="80" width="140" height="220" rx="10" fill="none" stroke="#555" stroke-width="3" />
     <rect x="290" y="70" width="60" height="10" fill="#333" rx="2" />
-    <path d="M 251.5,{vessel_water_top_y} Q 320,{{ {vessel_water_top_y} + 2 }} 388.5,{vessel_water_top_y} L 388.5,298.5 L 251.5,298.5 Z" fill="rgba(0, 123, 255, 0.23)" />
-
+    
+    <!-- Контур води з унікальним ID для динамічного керування через JS -->
+    <path id="vessel-water-path" d="M 251.5,150 Q 320,152 388.5,150 L 388.5,298.5 L 251.5,298.5 Z" fill="rgba(0, 123, 255, 0.23)" />
+    
     <text x="320" y="190" class="lbl-txt" fill="#0056b3" text-anchor="middle">Судина А</text>
-    {bubbles}
+    BUBBLES_VAR
     
     <!-- 2. БЛОК З КАПІЛЯРОМ К -->
     <rect x="490" y="90" width="160" height="90" rx="6" fill="#f1f3f5" stroke="#adb5bd" stroke-width="2" />
@@ -56,14 +58,14 @@ BASE_TEMPLATE = """
     <!-- 4. КРАН В ТА СТАКАН -->
     <path d="M 320,300 L 320,330" fill="none" stroke="#555" stroke-width="3" />
     <circle cx="320" cy="330" r="10" fill="#6c757d" stroke="#333" stroke-width="1.5" />
-    <g transform="translate(320,330) rotate({valve_angle})">
+    <g transform="translate(320,330) rotate(VALVE_ANGLE_VAR)">
         <rect x="-4" y="-18" width="8" height="36" fill="#dc3545" rx="2" />
         <circle cx="0" cy="0" r="5" fill="#fff" />
     </g>
     <text x="345" y="335" class="lbl-txt">Кран B</text>
     
-    {cup_element}
-    {water_flow_element}
+    CUP_ELEMENT_VAR
+    WATER_FLOW_ELEMENT_VAR
 
     <!-- 5. U-ПОДІБНИЙ МАНОМЕТР М -->
     <g class="mano-group">
@@ -80,7 +82,7 @@ BASE_TEMPLATE = """
               fill="none" stroke="#555" stroke-width="16" stroke-linecap="round" style="opacity: 0.15;" />
 
         <!-- === МОНОЛІТНЕ ЦІЛЬНЕ ВОДНЕ ТІЛО МАНОМЕТРА === -->
-        <path id="v-water-contour" d="M 110,{init_left_y} L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,{init_right_y}" 
+        <path id="v-water-contour" d="M 110,280 L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,280" 
               fill="none" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
     </g>
           
@@ -88,8 +90,7 @@ BASE_TEMPLATE = """
 
 </svg>
 
-{js_engine}
+JS_ENGINE_VAR
 </body>
 </html>
 """
-
