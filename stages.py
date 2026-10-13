@@ -77,7 +77,7 @@ def handle_laboratory_stages(valve_pos, target_dH_mm, flow_rate_air, is_turbulen
             st.session_state.measured_time = int(time.time() - st.session_state.start_time)
             del st.session_state["start_time"]
 
-        html_code = render.get_html_installation(valve_pos, target_dH_mm, 'drops', 'none', is_turbulent)
+        html_code = render.get_html_installation(valve_pos, target_dH_mm, 'drops', 'vspom', is_turbulent)
         with installation_placeholder:
             components.html(html_code, height=430, scrolling=False)
         
