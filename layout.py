@@ -87,13 +87,33 @@ BASE_TEMPLATE = """
               fill="none" stroke="#555" stroke-width="16" stroke-linecap="round" style="opacity: 0.15;" />
 
         <!-- === МОНОЛІТНЕ ЦІЛЬНЕ ВОДНЕ ТІЛО МАНОМЕТРА === -->
-        <!-- Повертаємо ідеально рівне монолітне тіло води з круглими краями -->
-        <path id="v-water-contour" d="M 110,INIT_LEFT_Y_VAR L 110,350 Q 110,370 140,370 Q 170,370 170,350 L 170,INIT_RIGHT_Y_VAR" 
-              fill="none" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
+        <!-- Ограничительные маски в форме вогнутых стаканчиков для левого и правого колена -->
+        <defs>
+            <!-- Левое колено (ширина от 105 до 115). Верхняя линия дуги провисает вниз -->
+            <clipPath id="left-meniscus-clip">
+                <path id="left-clip-path" d="M 105,0 L 115,0 L 115,280 Q 110,283.5 105,280 Z" />
+            </clipPath>
+            <!-- Правое колено (ширина от 165 до 175). Верхняя линия дуги провисает вниз -->
+            <clipPath id="right-meniscus-clip">
+                <path id="right-clip-path" d="M 165,0 L 175,0 L 175,280 Q 170,283.5 165,280 Z" />
+            </clipPath>
+        </defs>
 
-        <!-- Білі інверсійні чашечки, які вирізають опуклість і роблять меніск вогнутим -->
-        <path id="left-meniscus" d="M 105,INIT_LEFT_Y_VAR Q 110,INIT_LEFT_Y_VAR 115,INIT_LEFT_Y_VAR" fill="#ffffff" />
-        <path id="right-meniscus" d="M 165,INIT_RIGHT_Y_VAR Q 170,INIT_RIGHT_Y_VAR 175,INIT_RIGHT_Y_VAR" fill="#ffffff" />
+        <!-- Синее тело манометра, разделенное по маскам обрезки -->
+        <g class="mano-fluid-group">
+            <!-- Нижняя статичная дуга (всегда на месте) -->
+            <path d="M 110,278 A 30,30 0 0,0 170,278" fill="none" stroke="royalblue" stroke-width="10" />
+
+            <!-- Левый столбик, обрезаемый вогнутой маской -->
+            <g clip-path="url(#left-meniscus-clip)">
+                <line id="left-knee" x1="110" y1="280" x2="110" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
+            </g>
+
+            <!-- Правый столбик, обрезаемый вогнутой маской -->
+            <g clip-path="url(#right-meniscus-clip)">
+                <line id="right-knee" x1="170" y1="280" x2="170" y2="280" stroke="royalblue" stroke-width="10" stroke-linecap="round" />
+            </g>
+        </g>
 
 
     </g>
