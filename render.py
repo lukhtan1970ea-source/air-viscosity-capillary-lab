@@ -41,16 +41,17 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             let leftY = (280 + safeShift).toFixed(1);
             let rightY = (280 - safeShift).toFixed(1);
             
-            // Повертаємо ідеальну математику монолітного контуру лінії
-            let newManoPath = `M 110,${{leftY}} L 110,350 Q 110,370 140,370 Q 170,370 170,${{rightY}}`;
-            document.getElementById('v-water-contour').setAttribute('d', newManoPath);
+            // 1. Рухаємо сині закруглені стовпчики рідини (базова лінія)
+            document.getElementById('left-knee').setAttribute('y2', leftY);
+            document.getElementById('right-knee').setAttribute('y2', rightY);
             
-            // Білі чашечки-маски провисають ВНИЗ на +4.5 пікселя, зрізаючи круглий краєчок стовпчика води
-            let leftMeniscusPath = `M 105,${{leftY}} Q 110,${{(parseFloat(leftY) + 4.5).toFixed(1)}} 115,${{leftY}} Z`;
-            document.getElementById('left-meniscus').setAttribute('d', leftMeniscusPath);
+            // 2. Синхронно зміщуємо обрізаючі маски ввігнутих менісків
+            let leftClip = `M 105,0 L 115,0 L 115,${{leftY}} Q 110,${{(parseFloat(leftY) + 3.5).toFixed(1)}} 105,${{leftY}} Z`;
+            document.getElementById('left-clip-path').setAttribute('d', leftClip);
             
-            let rightMeniscusPath = `M 165,${{rightY}} Q 170,${{(parseFloat(rightY) + 4.5).toFixed(1)}} 175,${{rightY}} Z`;
-            document.getElementById('right-meniscus').setAttribute('d', rightMeniscusPath);
+            let rightClip = `M 165,0 L 175,0 L 175,${{rightY}} Q 170,${{(parseFloat(rightY) + 3.5).toFixed(1)}} 165,${{rightY}} Z`;
+            document.getElementById('right-clip-path').setAttribute('d', rightClip);
+
             
             // 2. АНІМАЦІЯ ОПУСКАННЯ ВОДИ В СУДИНІ А
             if (flowMode !== 'none') {{
