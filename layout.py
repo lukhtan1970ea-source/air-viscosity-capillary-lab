@@ -27,8 +27,6 @@ BASE_TEMPLATE = """
 </head>
 <body>
 
-<div class="timer-box" style="display: TIMER_DISPLAY_VAR;">⏱️ Секундомір: <span id="js-timer">0.0 с</span></div>
-
 <svg width="100%" height="100%" viewBox="0 0 800 440" xmlns="http://w3.org" style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; max-height: 420px;">
     
     <text x="400" y="30" class="main-title">Схема експериментальної установки</text>
@@ -104,6 +102,11 @@ BASE_TEMPLATE = """
     </g>
           
     <text x="140" y="405" class="lbl-txt" fill="royalblue" text-anchor="middle">Манометр М</text>
+    <!-- Векторне електронне табло секундоміра (вбудоване прямо в схему) -->
+    <g id="js-timer-panel" style="display: TIMER_DISPLAY_VAR;">
+        <rect x="625" y="30" width="150" height="32" rx="4" fill="#333" stroke="#28a745" stroke-width="1.5" />
+        <text x="635" y="51" font-family="monospace" font-size="13" font-weight="bold" fill="#28a745">⏱️ Час: <tspan id="js-timer" fill="#fff">0.0</tspan> с</text>
+    </g>
 
 </svg>
 
