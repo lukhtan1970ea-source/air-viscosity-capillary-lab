@@ -29,7 +29,7 @@ BASE_TEMPLATE = """
 
 <div class="timer-box" style="display: TIMER_DISPLAY_VAR;">&#9201; Секундомір: <span id="js-timer">0.0 с</span></div>
 
-<svg width="760" height="420" viewBox="0 0 800 440" xmlns="http://w3.org" style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 8px;">
+<svg width="100%" height="100%" viewBox="0 0 800 440" xmlns="http://w3.org" style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; max-height: 420px;">
     
     <text x="400" y="30" class="main-title">Схема експериментальної установки</text>
 
