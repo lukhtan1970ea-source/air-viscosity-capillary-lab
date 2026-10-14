@@ -74,12 +74,12 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
         }}
         
         // Робота секундоміра — оновлюємо текстовий вузол всередині SVG-панелі
-        if ("{{cup_type}}" === "work") {
-            setInterval(() => {
+        if ("{{cup_type}}" === "work") {{
+            setInterval(() => {{
                 let diff = (Date.now() - startTime) / 1000;
                 document.getElementById('js-timer').textContent = diff.toFixed(1);
-            }, 100);
-        }
+                        }}, 100);
+        }}
 
         
         window.onload = () => {{
