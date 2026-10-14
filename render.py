@@ -170,7 +170,7 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     src = src.replace("CUP_ELEMENT_VAR", str(cup_element))
     src = src.replace("WATER_FLOW_ELEMENT_VAR", str(water_flow_element))
     src = src.replace("JS_ENGINE_VAR", str(js_engine))
-    # Додаємо унікальний мобільний контейнер-адаптер для смартфонів
+    # Додаємо ультра-захищений мобільний контейнер-адаптер для смартфонів
     responsive_wrapper = """
     <script>
         function adjustMobileScale() {
@@ -185,15 +185,21 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
                 svg.style.transform = `scale(${scaleFactor})`;
                 svg.style.transformOrigin = 'top center';
                 
+                // Безпечна зміна розмірів з перевіркою на існування елементів
                 if (panel) panel.style.transform = 'scale(1.15)';
-                if (timer) timer.style.fontSize = '20px';
+                if (timer && timer.style.display !== 'none') {
+                    timer.style.fontSize = '20px';
+                }
             } else {
                 svg.style.transform = 'none';
+                if (timer) timer.style.fontSize = '18px';
             }
         }
         window.addEventListener('resize', adjustMobileScale);
         window.addEventListener('load', adjustMobileScale);
+        // Запускаємо перевірку кілька разів для надійності в iframe Streamlit
         setTimeout(adjustMobileScale, 50);
+        setTimeout(adjustMobileScale, 300);
     </script>
     """
     
