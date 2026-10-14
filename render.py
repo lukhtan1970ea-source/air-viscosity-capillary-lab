@@ -170,5 +170,32 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     src = src.replace("CUP_ELEMENT_VAR", str(cup_element))
     src = src.replace("WATER_FLOW_ELEMENT_VAR", str(water_flow_element))
     src = src.replace("JS_ENGINE_VAR", str(js_engine))
+    # Додаємо унікальний мобільний контейнер-адаптер для смартфонів
+    responsive_wrapper = """
+    <script>
+        function adjustMobileScale() {
+            const svg = document.querySelector('svg');
+            const panel = document.getElementById('mano-digital-panel');
+            const timer = document.querySelector('.timer-box');
+            if (!svg) return;
+            
+            const windowWidth = window.innerWidth;
+            if (windowWidth < 780) {
+                const scaleFactor = (windowWidth / 785).toFixed(3);
+                svg.style.transform = `scale(${scaleFactor})`;
+                svg.style.transformOrigin = 'top center';
+                
+                if (panel) panel.style.transform = 'scale(1.15)';
+                if (timer) timer.style.fontSize = '20px';
+            } else {
+                svg.style.transform = 'none';
+            }
+        }
+        window.addEventListener('resize', adjustMobileScale);
+        window.addEventListener('load', adjustMobileScale);
+        setTimeout(adjustMobileScale, 50);
+    </script>
+    """
     
-    return src
+    return src.replace("</body>", f"{responsive_wrapper}</body>")
+
