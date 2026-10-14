@@ -20,10 +20,11 @@ def handle_laboratory_stages(valve_pos, target_dH_mm, flow_rate_air, is_turbulen
     def render_responsive_html(html_markup):
         with installation_placeholder:
             components.html(
-                f"<div style='max-width:100%; height:auto;'>{html_markup}</div>", 
-                height=380, 
+                f"<div style='width:100%; overflow:hidden;'>{html_markup}</div>", 
+                height=430, 
                 scrolling=False
             )
+
 
     if st.session_state.step == 0:
         # Крок 0: Готовність
