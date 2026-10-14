@@ -73,14 +73,12 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
             requestAnimationFrame(animateSetup);
         }}
         
-        // Робота секундоміра — оновлюємо текстовий вузол всередині SVG-панелі
-        if ("{{cup_type}}" === "work") {{
+        if ("{cup_type}" === "work") {{
             setInterval(() => {{
                 let diff = (Date.now() - startTime) / 1000;
-                document.getElementById('js-timer').textContent = diff.toFixed(1);
-                        }}, 100);
+                document.getElementById('js-timer').textContent = diff.toFixed(1) + ' c';
+            }}, 100);
         }}
-
         
         window.onload = () => {{
             requestAnimationFrame(animateSetup);
@@ -172,33 +170,5 @@ def get_html_installation(valve_pos, target_dH_mm, flow_mode, cup_type, is_turbu
     src = src.replace("CUP_ELEMENT_VAR", str(cup_element))
     src = src.replace("WATER_FLOW_ELEMENT_VAR", str(water_flow_element))
     src = src.replace("JS_ENGINE_VAR", str(js_engine))
-        # Абсолютно автономний мобільний адаптер, ізольований від елементів інтерфейсу
-    responsive_wrapper = """
-    <script>
-        function adjustMobileScale() {
-            const svg = document.querySelector('svg');
-            const panel = document.getElementById('mano-digital-panel');
-            if (!svg) return;
-            
-            const windowWidth = window.innerWidth;
-            if (windowWidth < 780) {
-                // Масштабуємо тільки векторну графіку під ширину екрану смартфона
-                const scaleFactor = (windowWidth / 785).toFixed(3);
-                svg.style.transform = `scale(${scaleFactor})`;
-                svg.style.transformOrigin = 'top center';
-                
-                if (panel) panel.style.transform = 'scale(1.1)';
-            } else {
-                svg.style.transform = 'none';
-            }
-        }
-        window.addEventListener('resize', adjustMobileScale);
-        window.addEventListener('load', adjustMobileScale);
-        setTimeout(adjustMobileScale, 50);
-        setTimeout(adjustMobileScale, 250);
-    </script>
-    """
     
-    return src.replace("</body>", f"{responsive_wrapper}</body>")
-
-
+    return src
