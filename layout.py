@@ -40,7 +40,7 @@ BASE_TEMPLATE = """
     <!-- Контур води з унікальним ID для динамічного керування через JS -->
     <path id="vessel-water-path" d="M 251.5,150 Q 320,152 388.5,150 L 388.5,298.5 L 251.5,298.5 Z" fill="rgba(0, 123, 255, 0.23)" />
     
-    <text x="320" y="190" class="lbl-txt" fill="#0056b3" text-anchor="middle">Судина А</text>
+    <text x="320" y="190" class="lbl-txt" fill="#0056b3" text-anchor="middle">Посудина А</text>
     BUBBLES_VAR
     
     <!-- 2. БЛОК З КАПІЛЯРОМ К (КОРОБОЧКА) -->
